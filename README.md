@@ -6,6 +6,11 @@ com sua própria **Máquina de Estados Finitos** mediada por **gates** — e tod
 cálculo de código não-confiável roda em **sandbox WebAssembly real** (Wasmtime,
 fuel + epoch).
 
+Inclui **continuidade garantida por API**: um objeto de sessão que você **seta
+e recupera** (`/continuity/{kind}/{key}`), persistido em SQLite, com cada
+operação atrás de gate, criado por meta-classe + factory — e push/PR via
+`gh api` com estado recuperável.
+
 ```
 DevContext (LLM + Pydantic/Instructor)
         │
@@ -37,9 +42,10 @@ N Agentes (microserviços OOP) ── cada um com FSM própria
 | Nada existe fora da API | `ApiGate` exige contexto de API — chamada direta ao engine falha | `test_fsm.py::test_blocked_when_no_api_context` |
 | Toda gate é objeto com PK única | `GateRecord.gate_id` (UUID) — input/output imutáveis com FKs | `test_gates.py::TestGateUUIDPK` |
 | Factory, nunca hardcode | `AgentFactory._creators: dict[Role → Creator]`; roles novos plugam em runtime | `test_factory.py::test_factory_not_hardcoded` |
-| Deny-by-default | role desconhecido = bloqueado; tool sem permissão = bloqueada | `test_gates.py::test_unknown_role_denied_by_default` |
+| Deny-by-default | role desconhecido = bloqueado; tool sem permissão = bloqueada; kind de continuidade desconhecido = bloqueado | `test_gates.py::test_unknown_role_denied_by_default`, `test_continuity.py` |
 | WASM de verdade | WAT compilado no Wasmtime; fuel exhaustion e epoch trap testados | `test_wasm.py` |
 | GOD MODE é o único editor | `PATCH /god/fsm/edit` exige `impact_analysis` (≥30 chars) + `refactor_reason`; `POST /god/tools/forge` valida o WAT antes | `test_api.py::TestGodMode` |
+| Continuidade set/recover | `/continuity/{kind}/{key}` (SQLite WAL + versionamento) atrás de gates; meta-classe registra kinds | `test_api_continuity.py::test_set_then_recover` |
 
 ## Começando
 
@@ -78,11 +84,35 @@ curl -X PATCH localhost:8000/god/fsm/edit \
        "new_transitions":[...]}'
 ```
 
+### Continuidade (set/recover via API)
+
+```bash
+# SETAR o estado da sessão (qualquer kind registrado pela meta-classe)
+curl -X PUT localhost:8000/continuity/session/current \
+  -H 'Content-Type: application/json' \
+  -d '{"data":{"branch":"arena/x","last_commit":"abc","next_steps":["continuar"]}}'
+
+# RECUPERAR (nova sessão, mesmo banco)
+curl localhost:8000/continuity/session/current
+curl localhost:8000/continuity/kinds        # registry da meta-classe
+curl 'localhost:8000/continuity/?kind=git_op'  # query
+
+# Kinds: session, git_op, artifact, kv — kind novo = criar uma classe
+# ContinuityComponent (a meta-classe registra; factory + gates + API se adaptam).
+```
+
+Toda operação passa por `ContinuityWriteGate`/`ContinuityReadGate`
+(403 + razão quando bloqueada), com versionamento otimista
+(409 em `expected_version` obsoleto). Push/PR (`team_builder.ghops.GitHubOps`:
+push via `git`, PR via `gh api`) gravam o estado em `git_op/branch/<branch>` —
+recuperável por qualquer sessão.
+
 ## Testando
 
 ```bash
-pytest                 # 116 testes: unit (85) + integration (24) + e2e (7)
+pytest                 # 158 testes: unit (112) + integration (39) + e2e (7)
 bash scripts/run_evidence.sh   # quality + validação WAT + suítes + cobertura
+bash scripts/demo_live.sh      # demo HTTP real (→ docs/evidence/live_server.txt)
 ```
 
 Cobertura atual: **94%** (ver `docs/evidence/pytest_final.txt`).
@@ -113,8 +143,10 @@ team_builder/
   tools.py       # ToolSpec / ToolRegistry / ToolExecutor (atrás da gate)
   wasm.py        # Wasmtime: fuel, epoch (ticker), traps, pool
   wasm_tools.py  # WAT das tools builtin (uppercase/fib/add)
-  db.py          # SQLAlchemy 2.0 — 7 tabelas, FKs obrigatórias
-  api.py         # FastAPI — 20 endpoints + GOD MODE
+  continuity.py  # Continuidade: meta-classe + factory + gates + componentes
+  ghops.py       # push (git) + PR (gh api) com estado na continuidade
+  db.py          # SQLAlchemy 2.0 — 8 tabelas, FKs obrigatórias, SQLite WAL
+  api.py         # FastAPI — 28 endpoints + GOD MODE + Continuity
 tests/           # unit / integration / e2e (116 testes)
 scripts/         # validate_wat.py, check_god_mode.py, run_evidence.sh
 docs/            # STATUS_REPORT.md, CONTINUATION_PLAN.md, evidence/

@@ -11,8 +11,19 @@ Architecture (2026):
   sole editor of the FSM API.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
+from team_builder.continuity import (  # noqa: F401
+    ArtifactPointer,
+    ContinuityComponent,
+    ContinuityFactory,
+    ContinuityMeta,
+    ContinuityReadGate,
+    ContinuityWriteGate,
+    GenericKV,
+    GitOpState,
+    SessionState,
+)
 from team_builder.factory import (  # noqa: F401
     AgentCreator,
     AgentFactory,
@@ -42,6 +53,7 @@ from team_builder.gates import (  # noqa: F401
     ToolAuthorizationGate,
     WasmSandboxGate,
 )
+from team_builder.ghops import GitHubOps  # noqa: F401
 from team_builder.llm import InstructorLLM, LLMClient, MockLLM  # noqa: F401
 from team_builder.models import (  # noqa: F401
     AgentRole,

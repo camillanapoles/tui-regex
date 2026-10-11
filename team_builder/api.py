@@ -21,9 +21,16 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from team_builder import __version__
+from team_builder.continuity import (
+    ContinuityFactory,
+    ContinuityReadGate,
+    ContinuityWriteGate,
+    make_continuity_gate_input,
+)
 from team_builder.db import (
     AgentRepo,
     AuditRepo,
+    ContinuityRepo,
     FSMRepo,
     GateRepo,
     TaskRepo,
@@ -99,6 +106,11 @@ class ForgeToolRequest(BaseModel):
     input_bytes_key: str | None = None
     assigned_roles: list[str] = Field(default_factory=list)
     fuel_limit: int = 5_000_000
+
+
+class ContinuitySetRequest(BaseModel):
+    data: dict[str, Any]
+    expected_version: int | None = None
 
 
 # ── Settings ─────────────────────────────────────────────────────────────
@@ -479,6 +491,128 @@ def create_app(
             raise HTTPException(403, detail=exc.reason) from exc
         except KeyError as exc:
             raise HTTPException(404, str(exc)) from exc
+
+    # ══ Continuity — objetos de sessão set/recover via API ════════════
+    @app.get("/continuity/kinds", tags=["Continuity"])
+    async def continuity_kinds(store: AppStore = store_dep):
+        """Registry dos kinds — populado pela META-CLASSE (auto-discovery)."""
+        kinds = ContinuityFactory.kinds()
+        return {
+            "kinds": kinds,
+            "total": len(kinds),
+            "registry": {k: ContinuityFactory.get_class(k).__name__ for k in kinds},
+        }
+
+    @app.get("/continuity/stats", tags=["Continuity"])
+    async def continuity_stats(store: AppStore = store_dep):
+        repo = ContinuityRepo(store.db)
+        return {
+            "total_objects": repo.count(),
+            "kinds_in_db": repo.all_kinds(),
+            "registered_kinds": ContinuityFactory.kinds(),
+        }
+
+    @app.get("/continuity/", tags=["Continuity"])
+    async def continuity_list(
+        store: AppStore = store_dep,
+        kind: str | None = Query(None),
+        key_prefix: str | None = Query(None),
+        limit: int = Query(100, ge=1, le=1000),
+    ):
+        gate = ContinuityReadGate(store.registry)
+        out = await gate(
+            make_continuity_gate_input("list", kind or "", key_prefix or "")
+        )
+        if not out.allowed:
+            raise HTTPException(403, detail=out.reason or "bloqueado pela gate")
+        rows = ContinuityRepo(store.db).list(kind, key_prefix, limit)
+        return {
+            "total": len(rows),
+            "objects": [
+                {
+                    "kind": r.kind,
+                    "key": r.key,
+                    "version": r.version,
+                    "data": r.data,
+                    "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+                }
+                for r in rows
+            ],
+        }
+
+    @app.get("/continuity/{kind}/{key:path}", tags=["Continuity"])
+    async def continuity_get(kind: str, key: str, store: AppStore = store_dep):
+        """RECUPERAR: get do objeto de continuidade (set/recover via API)."""
+        gate = ContinuityReadGate(store.registry)
+        out = await gate(make_continuity_gate_input("get", kind, key))
+        if not out.allowed:
+            raise HTTPException(403, detail=out.reason or "bloqueado pela gate")
+        row = ContinuityRepo(store.db).get(kind, key)
+        if row is None:
+            raise HTTPException(404, f"Continuidade '{kind}/{key}' não encontrada")
+        return {
+            "kind": row.kind,
+            "key": row.key,
+            "version": row.version,
+            "data": row.data,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            "gate_id": out.gate_id,
+        }
+
+    async def _continuity_set(
+        kind: str, key: str, req: ContinuitySetRequest, store: AppStore
+    ) -> dict:
+        gate = ContinuityWriteGate(store.registry)
+        out = await gate(make_continuity_gate_input("set", kind, key, req.data))
+        if not out.allowed:
+            raise HTTPException(403, detail=out.reason or "bloqueado pela gate")
+        from team_builder.continuity import VersionConflictError
+
+        try:
+            row = ContinuityRepo(store.db).save(
+                kind, key, dict(req.data), expected_version=req.expected_version
+            )
+        except VersionConflictError as exc:
+            raise HTTPException(
+                409,
+                detail={
+                    "error": "conflito de versão",
+                    "current_version": exc.current_version,
+                    "expected_version": exc.expected_version,
+                },
+            ) from exc
+        return {
+            "kind": row.kind,
+            "key": row.key,
+            "version": row.version,
+            "data": row.data,
+            "gate_id": out.gate_id,
+        }
+
+    @app.put("/continuity/{kind}/{key:path}", tags=["Continuity"])
+    async def continuity_put(
+        kind: str, key: str, req: ContinuitySetRequest, store: AppStore = store_dep
+    ):
+        """SETAR: upsert versionado do objeto de continuidade."""
+        return await _continuity_set(kind, key, req, store)
+
+    @app.post("/continuity/{kind}/{key:path}", tags=["Continuity"])
+    async def continuity_set(
+        kind: str, key: str, req: ContinuitySetRequest, store: AppStore = store_dep
+    ):
+        """SETAR (alias do PUT)."""
+        return await _continuity_set(kind, key, req, store)
+
+    @app.delete("/continuity/{kind}/{key:path}", tags=["Continuity"])
+    async def continuity_delete(kind: str, key: str, store: AppStore = store_dep):
+        gate = ContinuityWriteGate(store.registry)
+        out = await gate(make_continuity_gate_input("delete", kind, key))
+        if not out.allowed:
+            raise HTTPException(403, detail=out.reason or "bloqueado pela gate")
+        deleted = ContinuityRepo(store.db).delete(kind, key)
+        if not deleted:
+            raise HTTPException(404, f"Continuidade '{kind}/{key}' não encontrada")
+        return {"ok": True, "kind": kind, "key": key, "gate_id": out.gate_id}
 
     # ══ GOD MODE — sole editor of the FSM API ══════════════════════════
     @app.post("/god/build-team", tags=["GOD MODE"])

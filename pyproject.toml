@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "team-builder-wasm"
-version = "2.0.0"
+version = "2.0.1"
 description = "Plataforma de times de agentes autônomos: FSM + Gates (UUID PK) + Factory Pattern + sandbox Wasmtime (fuel/epoch) + FastAPI + Pydantic/Instructor."
 readme = "README.md"
 requires-python = ">=3.11"

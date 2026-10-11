@@ -28,6 +28,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
     event,
 )
@@ -176,6 +177,24 @@ class AuditRow(Base):
 
 
 # ── Engine / session factory ─────────────────────────────────────────────
+class ContinuityRow(Base):
+    """Objetos de continuidade (set/recover via API) — sessão, git ops,
+    artefatos, KV. (kind, key) é único; versionamento otimista."""
+
+    __tablename__ = "continuity_objects"
+    __table_args__ = (UniqueConstraint("kind", "key", name="uq_continuity_kind_key"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    key: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
 def make_engine(url: str | None = None) -> Engine:
     url = url or os.getenv("TEAM_BUILDER_DSN", "sqlite:///./team_builder.db")
     kwargs: dict[str, Any] = {}
@@ -189,6 +208,9 @@ def make_engine(url: str | None = None) -> Engine:
         def _enable_fk(dbapi_conn, _record):  # pragma: no cover - trivial
             cursor = dbapi_conn.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")  # melhor SQLite: R+W concorrentes
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
             cursor.close()
     return engine
 
@@ -449,6 +471,75 @@ class AuditRepo:
         return list(
             self.db.query(AuditRow).order_by(AuditRow.id.desc()).limit(limit).all()
         )
+
+
+class ContinuityRepo:
+    """CRUD + query dos objetos de continuidade (SQLite, versionado)."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get(self, kind: str, key: str) -> ContinuityRow | None:
+        return (
+            self.db.query(ContinuityRow)
+            .filter(ContinuityRow.kind == kind, ContinuityRow.key == key)
+            .first()
+        )
+
+    def save(
+        self,
+        kind: str,
+        key: str,
+        data: dict,
+        expected_version: int | None = None,
+    ) -> ContinuityRow:
+        """Upsert com versionamento otimista (expected_version opcional)."""
+        from team_builder.continuity import VersionConflictError
+
+        row = self.get(kind, key)
+        if row is None:
+            row = ContinuityRow(id=new_id("cont"), kind=kind, key=key, version=1)
+            self.db.add(row)
+        else:
+            if expected_version is not None and row.version != expected_version:
+                self.db.rollback()
+                raise VersionConflictError(row.version, expected_version)
+            row.version += 1
+        row.data = data
+        self.db.commit()
+        return row
+
+    def delete(self, kind: str, key: str) -> bool:
+        row = self.get(kind, key)
+        if row is None:
+            return False
+        self.db.delete(row)
+        self.db.commit()
+        return True
+
+    def list(
+        self,
+        kind: str | None = None,
+        key_prefix: str | None = None,
+        limit: int = 100,
+    ) -> list[ContinuityRow]:
+        query = self.db.query(ContinuityRow)
+        if kind:
+            query = query.filter(ContinuityRow.kind == kind)
+        if key_prefix:
+            query = query.filter(ContinuityRow.key.like(f"{key_prefix}%"))
+        return (
+            query.order_by(ContinuityRow.kind, ContinuityRow.key)
+            .limit(limit)
+            .all()
+        )
+
+    def count(self) -> int:
+        return self.db.query(ContinuityRow).count()
+
+    def all_kinds(self) -> list[str]:
+        rows = self.db.query(ContinuityRow.kind).distinct().all()
+        return sorted(r[0] for r in rows)
 
 
 def make_session(engine: Engine) -> Session:

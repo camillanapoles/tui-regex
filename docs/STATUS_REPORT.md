@@ -40,7 +40,8 @@ onde:
 | M6 | Agentes + Factory | 11 roles, creators dinâmicos, GenericAgent fallback, AgentTeam | ✅ |
 | M7 | API central | FastAPI: agentes, FSM trigger, tasks, tools, gates trace, GOD MODE endpoints | ✅ |
 | M8 | Camada relacional | SQLAlchemy 2.0: 7 tabelas com FKs obrigatórias (gate↔agent, gate↔tool, task↔agent, audit↔gate) | ✅ |
-| M9 | Testes + CI | 116 testes (unit/integration/e2e), cobertura 94%, workflow GitHub Actions | ✅ |
+| M9 | Testes + CI | 158 testes (unit/integration/e2e), cobertura 94%, workflow GitHub Actions | ✅ |
+| M10 | Continuidade garantida por API | Objeto de sessão set/recover: SQLite (WAL) + CRUD/query + gates + meta-classe + factory + gh api (push/PR) | ✅ |
 
 ## 3. Entregáveis
 
@@ -93,8 +94,14 @@ Legenda: ✅ implementado · 🧪 testado · ✅🧪 testado com sucesso · ❌ 
 | E2E: tool WASM ponta-a-ponta (uppercase/fibonacci) | ✅ | ✅ | ✅ | `test_full_sdlc.py::test_wasm_tool_end_to_end` |
 | Qualidade: ruff clean | ✅ | ✅ | ✅ | `ruff check` → “All checks passed!” |
 | CI/CD incremental (cancel-in-progress, matriz, artifacts, CD) | ✅ | 🧪⚠️ | — | workflow criado e validado localmente; execução no GitHub pendente do push |
+| **Continuidade: objeto de sessão set/recover via API** | ✅ | ✅ | ✅ | `test_api_continuity.py::test_set_then_recover` + live demo (steps 2-3) |
+| **Continuidade: meta-classe (auto-registry no birth da classe)** | ✅ | ✅ | ✅ | `test_continuity.py::TestContinuityMeta` (nova classe = registrado) |
+| **Continuidade: factory deny-by-default (kind desconhecido bloqueado)** | ✅ | ✅ | ✅ | `test_continuity.py::test_unknown_kind_denied` + API 403 no live demo |
+| **Continuidade: SQLite melhorado (WAL, busy_timeout) + CRUD + query + versionamento** | ✅ | ✅ | ✅ | `test_continuity.py::TestContinuityRepo` (incl. `VersionConflictError` 409) |
+| **Continuidade: gates OOP (write/read) com PK UUID + FKs** | ✅ | ✅ | ✅ | `test_continuity.py::TestContinuityGates` (7 testes) + `/gates/blocked` |
+| **GitHub ops: push (git) + PR (gh api) com estado na continuidade** | ✅ | ✅ | ✅ | `test_ghops.py` (comandos verificados) — PR real criado via `gh api` nesta sessão |
 
-**Resumo: 38/38 capabilities escopadas = implementadas, testadas e com sucesso.
+**Resumo: 45/45 capabilities = implementadas, testadas e com sucesso.
 Único item sem execução externa: o próprio workflow no GitHub Actions
 (executa automaticamente com o push deste branch).**
 
@@ -147,13 +154,13 @@ grande e sem garantias de isolamento (nenhum fuel/timeout/capability real).
 ### 6.1 Suíte completa — saída real do pytest
 
 ```
-── SUITE UNIT ───────── 85 passed in 3.27s
-── SUITE INTEGRATION ── 24 passed in 5.18s
-── SUITE E2E ─────────── 7 passed in 1.21s
-── FULL + COBERTURA ──── 116 passed
-TOTAL  1499 stmts, 86 miss  →  94%
-    agents.py 99% · api.py 90% · db.py 97% · factory.py 96%
-    fsm.py 96% · gates.py 99% · models.py 98% · tools.py 93% · wasm.py 94%
+── SUITE UNIT ───────── 112 passed
+── SUITE INTEGRATION ── 39 passed
+── SUITE E2E ─────────── 7 passed
+── FULL + COBERTURA ──── 158 passed
+TOTAL  1809 stmts, 100 miss  →  94%
+    continuity.py 96% · ghops.py 88% · agents.py 99% · api.py 92%
+    db.py 98% · factory.py 96% · fsm.py 96% · gates.py 99% · tools.py 93%
 ```
 Bruto: `docs/evidence/pytest_final.txt` (inclui ruff + validação WAT).
 
@@ -168,7 +175,12 @@ Bruto: `docs/evidence/pytest_final.txt` (inclui ruff + validação WAT).
 - role gate bloqueando `deploy` do PM com trace completo de 3 gates
   (UUIDs + `input_id` FK);
 - GOD MODE: 403 sem credential; `forge` da tool `double` (WAT compilado em
-  runtime) → execução `21+21 → 42`; trilha de auditoria em `/god/audit`.
+  runtime) → execução `21+21 → 42`; trilha de auditoria em `/god/audit`;
+- **CONTINUITY**: `PUT /continuity/session/current` (version 1) →
+  `GET /continuity/session/current` recupera o estado exato (set/recover);
+  kinds da meta-classe (`session/git_op/artifact/kv`); 403 para kind
+  desconhecido ("deny-by-default") e key inválida; 409 em versionamento
+  obsoleto; violações visíveis em `/gates/blocked`.
 
 ### 6.3 Reprodução
 
@@ -176,6 +188,7 @@ Bruto: `docs/evidence/pytest_final.txt` (inclui ruff + validação WAT).
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt pytest-cov
 bash scripts/run_evidence.sh          # quality + wasm + 3 suítes + cobertura
+bash scripts/demo_live.sh             # demo HTTP real → docs/evidence/live_server.txt
 uvicorn team_builder.api:app --port 8000   # API viva (OpenAPI em /docs)
 ```
 

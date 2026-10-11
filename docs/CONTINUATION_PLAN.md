@@ -2,11 +2,33 @@
 
 Plano de continuidade estruturado em **Epics → Features → Tarefas**, com as
 **gates** e **objetos** que cada um exige manter 100% relacionados (PK/FK).
-Tudo parte do estado atual (v2.0.0, 116 testes verdes, 94% cobertura).
+Tudo parte do estado atual (v2.0.1, 158 testes verdes, 94% cobertura,
+continuidade de sessão já entregue: set/recover via API + gh api).
 
 > Convenção: cada feature lista (a) objetivo, (b) stack, (c) conexões
 > (objetos/gates existentes que ela toca), (d) tarefas, (e) nova gate quando
 > houver e (f) novos objetos relacionais.
+
+---
+
+## Epic E0 (ENTREGUE) — Continuidade garantida por API
+
+O fundamento de continuidade já existe (base para E1-E6):
+
+- `ContinuityMeta` (meta-classe) registra componentes no birth da classe;
+- `ContinuityFactory` (deny-by-default) cria/valida; kinds: `session`,
+  `git_op`, `artifact`, `kv`;
+- SQLite em WAL + tabela `continuity_objects` (kind, key) único +
+  versionamento otimista;
+- `ContinuityWriteGate`/`ContinuityReadGate` medeiam cada set/get/delete;
+- Endpoints: `GET/PUT/POST/DELETE /continuity/{kind}/{key}`,
+  `GET /continuity/` (query), `/continuity/kinds`, `/continuity/stats`;
+- `GitHubOps` (push via git; PR via `gh api`) grava o estado em `git_op`
+  — push/PR tornam-se recuperáveis por qualquer sessão.
+
+**Restante do E0 (fase 2.1):** hash-chain de integridade nos objetos
+(imutabilidade auditável) e endpoint GOD `POST /god/continuity/snapshot`
+(snapshot versionado exportável).
 
 ---
 
