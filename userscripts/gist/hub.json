@@ -1,0 +1,37 @@
+{
+  "hub": "USHub · catálogo exemplo",
+  "version": 1,
+  "updated": "2026-09-18",
+  "scripts": [
+    {
+      "id": "leitor-conforto",
+      "name": "Leitor Conforto",
+      "emoji": "📖",
+      "version": "1.0.0",
+      "description": "Leitura confortável com um toque: fonte maior, entrelinha generosa, largura de coluna ideal (~66 caracteres) e contraste suave. A preferência fica salva por site.",
+      "file": "leitor-conforto.user.js",
+      "tags": ["leitura", "acessibilidade", "ux"],
+      "author": "@camillanapoles"
+    },
+    {
+      "id": "voltar-ao-topo",
+      "name": "Voltar ao Topo",
+      "emoji": "⬆️",
+      "version": "1.0.0",
+      "description": "Botão discretíssimo que só aparece depois de rolar a página. Alvo de toque de 48px, respeita 'reduzir movimento' e fica no canto esquerdo para não disputar espaço com o USHub.",
+      "file": "voltar-ao-topo.user.js",
+      "tags": ["navegação", "mobile"],
+      "author": "@camillanapoles"
+    },
+    {
+      "id": "modo-noturno",
+      "name": "Modo Noturno Universal",
+      "emoji": "🌙",
+      "version": "1.0.0",
+      "description": "Escurece qualquer site com inversão inteligente (fotos e vídeos não são invertidos). Alterna com um toque e lembra a escolha em cada site.",
+      "file": "modo-noturno.user.js",
+      "tags": ["tema", "escuro", "acessibilidade"],
+      "author": "@camillanapoles"
+    }
+  ]
+}
