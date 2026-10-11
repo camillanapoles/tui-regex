@@ -1,0 +1,51 @@
+════ EVIDÊNCIA EXECUTÁVEL — 2026-10-11T23:38:29Z ════
+Python: Python 3.11.2
+Pacotes: wasmtime/ fastapi/ pydantic/ sqlalchemy/ instructor/ pytest/
+
+── QUALITY: ruff check ──
+All checks passed!
+
+── WASM VALIDATION: scripts/validate_wat.py ──
+[wasm-validate] uppercase: WAT compilado com sucesso
+[wasm-validate] uppercase: smoke OK -> 'CI-WASM'
+[wasm-validate] fibonacci: WAT compilado com sucesso
+[wasm-validate] fibonacci: smoke OK -> '55'
+[wasm-validate] add: WAT compilado com sucesso
+[wasm-validate] add: smoke OK -> '42'
+[wasm-validate] TODOS OS MÓDULOS WASM VÁLIDOS (wasmtime)
+
+── SUITE UNIT ──
+........................................                                 [100%]
+112 passed in 1.15s
+
+── SUITE INTEGRATION ──
+.......................................                                  [100%]
+39 passed in 2.88s
+
+── SUITE E2E ──
+.......                                                                  [100%]
+7 passed in 0.32s
+
+── FULL SUITE + COBERTURA ──
+------------------------------------------------
+team_builder/__init__.py         8      0   100%
+team_builder/agents.py         185      1    99%
+team_builder/api.py            318     26    92%
+team_builder/continuity.py     132      5    96%
+team_builder/db.py             285      6    98%
+team_builder/factory.py         85      3    96%
+team_builder/fsm.py            109      4    96%
+team_builder/gates.py          203      2    99%
+team_builder/ghops.py           72      9    88%
+team_builder/ids.py              6      0   100%
+team_builder/llm.py             80     29    64%
+team_builder/models.py         130      3    98%
+team_builder/tools.py           70      5    93%
+team_builder/wasm.py           122      7    94%
+team_builder/wasm_tools.py       5      0   100%
+------------------------------------------------
+TOTAL                         1810    100    94%
+Coverage XML written to file coverage.xml
+158 passed in 6.63s
+
+════ FIM DA EVIDÊNCIA ════

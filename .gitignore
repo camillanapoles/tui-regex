@@ -11,7 +11,7 @@ coverage.xml
 htmlcov/
 junit*.xml
 wasm-out/
-evidence/
+/evidence/  # só top-level; docs/evidence/ É evidência do produto
 *.db
 *.db-wal
 *.db-shm
