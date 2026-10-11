@@ -44,8 +44,11 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - name: Install (wasmtime)
-        run: pip install wasmtime
+      # requirements completo: o script importa team_builder (pacote puxa
+      # fastapi/sqlalchemy/etc. no __init__), então valida contra o MESMO
+      # conjunto de dependências do produto
+      - name: Install (requirements)
+        run: pip install -r requirements.txt
       - name: Validate all embedded WAT modules (wasmtime)
         run: python scripts/validate_wat.py
       - name: Emit .wat files (fonte única -> WABT)
