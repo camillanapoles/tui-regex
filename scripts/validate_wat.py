@@ -32,7 +32,10 @@ TOOLS = [
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--emit", default=None, help="diretório p/ gravar .wasm")
+    parser.add_argument(
+        "--emit-wat", default=None,
+        help="diretório p/ gravar os arquivos .wat (2º validador, ex.: WABT)",
+    )
     args = parser.parse_args()
 
     config = Config()
@@ -51,19 +54,13 @@ def main() -> int:
             failures += 1
             continue
 
-        # exporta binário para auditoria
-        if args.emit:
-            os.makedirs(args.emit, exist_ok=True)
-            path = os.path.join(args.emit, f"{name}.wasm")
-            module_bytes = module.__bytes__() if hasattr(module, "__bytes__") else None
-            if module_bytes is None:
-                # re-emite a partir do WAT compilado (wasmtime não expõe bytes
-                # publicamente em algumas versões) -> usamos wat2wasm no CI se disponível
-                print(f"[wasm-validate] {name}: export .wasm indisponível (skip)")
-            else:
-                with open(path, "wb") as fh:
-                    fh.write(module_bytes)
-                print(f"[wasm-validate] {name}: binário em {path}")
+        # exporta o .wat para validação por 2º validador (WABT no CI)
+        if args.emit_wat:
+            os.makedirs(args.emit_wat, exist_ok=True)
+            path = os.path.join(args.emit_wat, f"{name}.wat")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(wat)
+            print(f"[wasm-validate] {name}: WAT em {path}")
 
         # instancia e confere export (mesma API do sandbox da plataforma)
         store = Store(engine)

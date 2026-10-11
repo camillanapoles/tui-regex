@@ -36,7 +36,7 @@ jobs:
 
   # ══ 2. Validação WASM (WAT -> wasmtime/Bytecode Alliance) ═══════════
   wasm-validate:
-    name: WAT validation (wasmtime)
+    name: WAT validation (wasmtime + WABT)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,27 +46,34 @@ jobs:
           cache: pip
       - name: Install (wasmtime)
         run: pip install wasmtime
-      - name: Validate all embedded WAT modules
+      - name: Validate all embedded WAT modules (wasmtime)
         run: python scripts/validate_wat.py
+      - name: Emit .wat files (fonte única -> WABT)
+        run: python scripts/validate_wat.py --emit-wat wat-out
       - name: Install wasm-validate (WABT)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq wabt || true
-      - name: wasm-validate emitted binaries (best effort)
+      - name: wasm-validate (segundo validador, WABT)
         run: |
-          if command -v wasm-validate >/dev/null; then
-            python scripts/validate_wat.py --emit wasm-out || true
-            for f in wasm-out/*.wasm; do
-              [ -e "$f" ] && wasm-validate "$f" && echo "wasm-validate OK: $f"
+          if command -v wat2wasm >/dev/null && command -v wasm-validate >/dev/null; then
+            mkdir -p wasm-out
+            for f in wat-out/*.wat; do
+              name="$(basename "$f" .wat)"
+              wat2wasm "$f" -o "wasm-out/${name}.wasm"
+              wasm-validate "wasm-out/${name}.wasm"
+              echo "wabt OK: ${name}.wasm"
             done
           else
-            echo "wabt indisponível — validação oficial já feita pelo wasmtime"
+            echo "wabt indisponível — validação oficial já feita pelo wasmtime acima"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: wasm-artifacts
-          path: wasm-out/
+          path: |
+            wat-out/
+            wasm-out/
           if-no-files-found: ignore
 
   # ══ 3. Matriz de testes: unit / integration / e2e ═══════════════════

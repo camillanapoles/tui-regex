@@ -13,6 +13,9 @@ junit*.xml
 wasm-out/
 evidence/
 *.db
+*.db-wal
+*.db-shm
+*.db-journal
 *.sqlite3
 team_builder.db
 dist/
