@@ -748,5 +748,11 @@ def create_app(
     return app
 
 
-# Default app for `uvicorn team_builder.api:app`
-app = create_app()
+# Default app for `uvicorn team_builder.api:app` — usa o DSN configurado
+# (TEAM_BUILDER_DSN ou sqlite file) para que API e escritores externos
+# (ex.: GitHubOps) compartilhem o MESMO banco de continuidade.
+_default_settings = Settings()
+app = create_app(
+    db_url=_default_settings.db_url,
+    god_secret=_default_settings.god_mode_secret,
+)
