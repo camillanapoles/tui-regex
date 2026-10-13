@@ -1,0 +1,80 @@
+name: Session Continuity
+
+# ─────────────────────────────────────────────────────────────────────────
+# Continuidade da sessão garantida por CI/CD (sobrevive ao fim da sessão).
+#
+# Gatilhos:
+#   * push em `main`  → dispara automaticamente quando o PR da sessão é
+#     mesclado (eventos de push são entregues pelo webhook nativo do GitHub)
+#   * workflow_dispatch → gatilho manual ("via GH"):
+#       gh workflow run session-continuity.yml [--ref <branch>]
+#
+# O que garante:
+#   1. Gate: handoff só é gerado com o estado VERDE (WAT válido + 158 testes)
+#   2. Contexto: docs/handoff/SESSION_HANDOFF.md gerado de forma
+#      DETERMINÍSTICA a partir do repositório (git + snapshot de continuidade
+#      commitado) — nenhum contexto vive só no chat
+#   3. Branch: cria `handoff/<sha>-<data>` no MESMO repositório e faz push
+#   4. Retomada: abre (ou atualiza) um DRAFT PR com as instruções de
+#      retomada — a próxima janela/sessão (second way) continua a partir dele
+# ─────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  handoff:
+    name: gate-verde + handoff + branch + draft-PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependências
+        run: pip install -r requirements.txt
+
+      - name: "Gate: handoff só com estado verde (CI/CD completo)"
+        run: |
+          python scripts/validate_wat.py
+          pytest -q
+
+      - name: "Gerar contexto de handoff (determinístico, a partir do repo)"
+        run: python scripts/generate_handoff.py --out docs/handoff/SESSION_HANDOFF.md
+
+      - name: "Criar branch de continuidade no mesmo repositório + push"
+        id: branch
+        run: |
+          SHORT=$(git rev-parse --short HEAD)
+          BR="handoff/${SHORT}-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "session-continuity[bot]"
+          git config user.email "session-continuity@users.noreply.github.com"
+          git checkout -b "$BR"
+          git add docs/handoff/SESSION_HANDOFF.md
+          git commit -m "continuity: handoff da sessão @ ${SHORT} (ponto de retomada da próxima janela)"
+          git push origin "$BR"
+          echo "branch=$BR" >> "$GITHUB_OUTPUT"
+
+      - name: "Abrir (ou atualizar) draft PR de retomada"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BR="${{ steps.branch.outputs.branch }}"
+          BASE="${{ github.ref_name }}"
+          EXISTING=$(gh pr list --head "$BR" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh pr edit "$EXISTING" --body-file docs/handoff/SESSION_HANDOFF.md
+          else
+            gh pr create --base "$BASE" --head "$BR" --draft \
+              --title "🔁 Continuity: handoff da sessão @ $(git rev-parse --short HEAD)" \
+              --body-file docs/handoff/SESSION_HANDOFF.md
+          fi

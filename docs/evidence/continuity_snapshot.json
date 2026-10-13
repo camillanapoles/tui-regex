@@ -1,0 +1,52 @@
+{
+  "captured_at": "2026-10-13T13:59:10.360534+00:00",
+  "source": "http://localhost:8000",
+  "branch": "arena/01a0d0f0-tui-regex",
+  "head": "efc57ad6e35d7aed801bdc762fdbd04c5ca506a5",
+  "stats": {
+    "total_objects": 2,
+    "kinds_in_db": [
+      "git_op",
+      "session"
+    ],
+    "registered_kinds": [
+      "artifact",
+      "git_op",
+      "kv",
+      "session"
+    ]
+  },
+  "objects": {
+    "session/current": {
+      "kind": "session",
+      "key": "current",
+      "version": 1,
+      "data": {
+        "branch": "arena/01a0d0f0-tui-regex",
+        "last_commit": "efc57ad",
+        "pr": 1,
+        "step": "handoff_mechanism_installed",
+        "next": "E0.1 hash-chain; merge PR#1 -> trigger session-continuity"
+      },
+      "updated_at": "2026-10-13T13:58:53.088971",
+      "gate_id": "gate-fafaf1f48f4e439e95a939fda4affb39"
+    },
+    "git_op/branch/arena/01a0d0f0-tui-regex": {
+      "kind": "git_op",
+      "key": "branch/arena/01a0d0f0-tui-regex",
+      "version": 1,
+      "data": {
+        "kind": "git_op",
+        "remote": "https://github.com/camillanapoles/tui-regex.git",
+        "branch": "arena/01a0d0f0-tui-regex",
+        "commit": "efc57ad6e35d7aed801bdc762fdbd04c5ca506a5",
+        "pr_number": null,
+        "pr_url": "",
+        "status": "pending",
+        "last_error": ""
+      },
+      "updated_at": "2026-10-13T13:58:58.642872",
+      "gate_id": "gate-accf5b21a7f346818009802edd3f406c"
+    }
+  }
+}

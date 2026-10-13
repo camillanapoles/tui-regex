@@ -165,7 +165,27 @@ curl -X POST localhost:8000/god/build-team -H 'X-God-Mode: god-mode-secret' -H '
 - `pytest_final.txt` — 158 passed, cobertura 94%
 - `live_server.txt` — bateria completa ao vivo no HEAD final (com a seção de validação CI + live)
 
-### 7.4 Pendências já mapeadas (fora do escopo desta entrega — `docs/CONTINUATION_PLAN.md`)
+### 7.4 Continuidade de sessão (automatizada por CI/CD)
+Quando esta sessão terminar (ex.: merge do PR #1 em `main`), o workflow
+**Session Continuity** (`.github/workflows/session-continuity.yml`) garante a
+retomada completa — nenhum contexto vive só no chat:
+
+- **Gatilhos:** push em `main` (webhook nativo do GitHub, dispara no merge) **ou**
+  `workflow_dispatch` manual "via GH": `gh workflow run session-continuity.yml [--ref <branch>]`
+- **Fluxo:** gate de estado **verde** (WAT válido + 158 testes) → gera
+  `docs/handoff/SESSION_HANDOFF.md` de forma **determinística** (git + snapshot de
+  continuidade commitado) → cria a branch `handoff/<sha>-<data>` **no mesmo
+  repositório** + push → abre (ou atualiza) um **draft PR** com as instruções
+  passo a passo de retomada
+- **Retomada (second way):** nova sessão/janela abre o draft PR (ou `main` após
+  merge), lê o handoff e **recupera o estado pela Continuity API**
+  (`GET /continuity/session/current`, `GET /continuity/git_op/branch/<branch>`);
+  o draft PR do handoff roda o CI completo do repositório
+- **Snapshot do estado vivo:** `scripts/snapshot_continuity.py` exporta os objetos
+  de continuidade do servidor para `docs/evidence/continuity_snapshot.json`
+  (commitado); `scripts/generate_handoff.py` o embute no documento de handoff
+
+### 7.5 Pendências já mapeadas (fora do escopo desta entrega — `docs/CONTINUATION_PLAN.md`)
 E0.1 integridade de hash-chain da continuidade · E1 tenancy multi-tenant · E2 LLM real em produção · E3 scaling/observabilidade (métricas, AOT, pooling) · E4 adoção do ecossistema WASM 2026 (WASI 0.2/Component Model) · E6 hardening (rate limit, rede WASI fechada por padrão).
 
 ---
