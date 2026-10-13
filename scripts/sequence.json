@@ -1,0 +1,62 @@
+{
+  "projeto": "USHub",
+  "sequencia_topologica": "USH-01 → USH-02 → USH-03 → USH-04 → DONE",
+  "regra": "Cada issue só é criada quando a anterior é FECHADA e os testes passam (gate). Erro de gate = não avança.",
+  "chain": [
+    {
+      "id": "USH-01",
+      "gap": "G2",
+      "type": "semi",
+      "title": "Confirmar o catálogo de fábrica carregando (zero-config)",
+      "instrucao": [
+        "Desde a v1.1.0 o catálogo padrão vem do próprio repo (raw.githubusercontent) — gist próprio é opcional.",
+        "Automatizado: suite S9 prova resolução de arquivos-irmãos + instalação a partir da URL crua do repo.",
+        "Humano (1 min): abrir o link do demo npm run demo no Android → catálogo lista 3 scripts sem configurar nada.",
+        "Critério de aceite: catálogo visível com 3 scripts e botão Instalar.",
+        "Concluiu? FECHE esta issue — o orquestrador testa tudo e cria a próxima (USH-02) automaticamente."
+      ]
+    },
+    {
+      "id": "USH-02",
+      "gap": "G1",
+      "type": "manual",
+      "dependsOn": "USH-01",
+      "title": "Validar em Android físico (checklist de toques)",
+      "instrucao": [
+        "Arraste o FAB para a esquerda/direita → solte → ele encaixa na borda e fica translúcido após ~4s.",
+        "Abra o teclado num campo de texto → o FAB some; feche o teclado → ele volta.",
+        "Catálogo: busque 'noturno' (sem acento) → 1 resultado; digitação com acentos não trava.",
+        "Ajustes: alterne Escuro/Claro e A−/A+ → recarregue a página → preferências persistem.",
+        "Instale 1 script a partir do catálogo → Tampermonkey abre a tela de instalação.",
+        "Concluiu? FECHE esta issue — o orquestrador testa e cria USH-03."
+      ]
+    },
+    {
+      "id": "USH-03",
+      "gap": "G6",
+      "type": "semi",
+      "dependsOn": "USH-02",
+      "title": "Abrir PR arena/01a0b492-tui-regex → main",
+      "instrucao": [
+        "Confira o check 'Completude USHub *' verde no PR (a pipeline roda em pull_request).",
+        "Comando: gh pr create --base main --head arena/01a0b492-tui-regex --fill",
+        "Concluiu (PR aberto)? FECHE esta issue — o orquestrador testa e cria USH-04.",
+        "O merge em si fica para depois da USH-04 (branch protection ativada)."
+      ]
+    },
+    {
+      "id": "USH-04",
+      "gap": "G4",
+      "type": "manual",
+      "dependsOn": "USH-03",
+      "title": "Ativar branch protection exigindo 'Completude USHub *'",
+      "instrucao": [
+        "Settings → Branches → Add rule (branch: main).",
+        "Marque 'Require status checks to pass' e selecione 'Completude USHub (Node 20)' e '(Node 22)'.",
+        "Salve. A partir daqui o merge fica BLOQUEADO se qualquer portão falhar (gate obrigatório).",
+        "Critério de aceite: um PR de teste mostra 'Merging is blocked' com check vermelho.",
+        "Concluiu? FECHE esta issue — a cadeia topológica chega a DONE e o guardião passa a relatar SUCESSO."
+      ]
+    }
+  ]
+}

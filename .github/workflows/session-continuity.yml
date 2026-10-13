@@ -20,11 +20,9 @@ name: Session Continuity
 # ─────────────────────────────────────────────────────────────────────────
 on:
   push:
-    # main = gatilho permanente (merge da sessão, webhook nativo).
-    # arena/... = TEMPORÁRIO — apenas para validar o toggle de draft-PR; removido em seguida.
-    branches:
-      - main
-      - arena/01a0d0f0-tui-regex
+    # Dispara no merge da sessão em `main` (webhook nativo do GitHub).
+    # Disparo manual: botão "Run workflow" na UI do GitHub (workflow_dispatch).
+    branches: [main]
   workflow_dispatch:
 
 permissions:

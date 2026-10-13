@@ -1,0 +1,29 @@
+name: guardian
+
+# Guardião de continuidade: verifica "SEM issues abertas + CI verde + testes presentes".
+# Enquanto não positivo ⇒ envelope 2 · CONTINUIDADE. Erro bloqueante ⇒ envelope 1 e run vermelha.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '13 10 * * *'   # ~07:13 America/Sao_Paulo. OBS: cron só agende na branch default (main) → depende da USH-03 (PR).
+
+permissions:
+  contents: read
+  issues: read
+  actions: read
+
+jobs:
+  report:
+    name: "Guardião · estado do fluxo"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Relatório BPMN (JSON + resumo)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/orchestrator.mjs report

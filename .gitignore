@@ -20,3 +20,5 @@ wasm-out/
 team_builder.db
 dist/
 build/
+node_modules/
+gate-envelope.json
