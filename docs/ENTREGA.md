@@ -197,4 +197,4 @@ Sem instalar nada: `npm run demo` e abrir o link no celular (Tampermonkey simula
 ```
 
 ---
-*Relatório atualizado na rodada T5 (BPMN sobre issues). Tudo reproduzível: `npm ci && npm test` · `node scripts/orchestrator.mjs self-test` · Actions linkado.*
+*Relatório atualizado na rodadas T5–T7 (BPMN sobre issues). Tudo reproduzível: `npm ci && npm test` · `node scripts/orchestrator.mjs self-test` · Actions linkado.*
