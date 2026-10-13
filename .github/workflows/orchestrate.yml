@@ -1,0 +1,44 @@
+name: orchestrate
+
+# Sequenciador BPMN: issue USH-xx FECHADA → testa (gate) → cria a próxima indexada.
+on:
+  issues:
+    types: [closed]
+  workflow_dispatch:        # modo self-test offline (não cria issue)
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  orchestrate:
+    name: "BPMN · sequência topológica USH"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      # 1) self-test do envelope (sempre — garante o padrão JSON)
+      - name: "Portão A · Envelope BPMN íntegro (self-test)"
+        run: node scripts/orchestrator.mjs self-test
+
+      # 2) GATE: "cada issue completada TESTA entregue"
+      - name: "Portão B · npm test (a issue só avança com gate verde)"
+        id: gate
+        if: github.event_name == 'issues'
+        continue-on-error: true
+        run: npm ci --no-audit --no-fund && npm test
+
+      # 3) advance: sucesso ⇒ cria próxima issue; erro ⇒ envelope 1 + continuidade
+      - name: "Avançar cadeia (criar próxima issue indexada)"
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          GATE: ${{ steps.gate.outcome }}
+        run: node scripts/orchestrator.mjs advance --issue "$ISSUE_NUMBER" --title "$ISSUE_TITLE" --gate "$GATE"

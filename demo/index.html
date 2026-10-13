@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>USHub · demo no celular (sem instalar nada)</title>
+<style>
+  body { font: 17px/1.65 system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 76px 16px 48px; color: #1b2431; }
+  #gmbar { position: fixed; inset: 0 0 auto 0; z-index: 999999; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+           background: #17212f; color: #fff; padding: 10px 12px; font-size: 13px; }
+  #gmbar b { font-size: 14px; }
+  #gmbar button { border: 1px solid #4a5a78; background: #24334d; color: #fff; border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+  .checklist { background: #f1f6ff; border: 1px solid #cadbff; border-radius: 14px; padding: 14px 16px; }
+  .checklist li { margin-bottom: 8px; }
+  input.demo { width: 100%; font-size: 17px; padding: 12px 14px; border: 1.5px solid #b9c6dd; border-radius: 12px; }
+  code { background: #eef2f9; border-radius: 6px; padding: 1px 6px; }
+</style>
+</head>
+<body>
+<div id="gmbar"><b>🧪 Tampermonkey simulado</b><span>(menu do gerenciador aparece aqui)</span></div>
+
+<h1>Validação do USHub no seu Android</h1>
+<p>Esta página roda o <code>ushub.user.js</code> <b>real</b> do repositório, com <code>GM_*</code> emulados.
+   O botão flutuante <b>&lt;/&gt;</b> no canto da tela é o produto.</p>
+
+<section class="checklist">
+  <h2>Checklist (≈1 min) — fecha a USH-02</h2>
+  <ol>
+    <li><b>Arraste</b> o botão para a esquerda/direita → solte: encaixa na borda; espere ~4s parado: fica translúcido.</li>
+    <li>Toque no campo abaixo e abra o <b>teclado</b> → o botão some; feche o teclado → volta.</li>
+    <li>Abra o painel (toque no botão) → catálogo <b>de fábrica</b> lista 3 scripts sem configurar nada.</li>
+    <li>Busque <code>noturno</code> (sem acento) → 1 resultado; tente acentuar com o Gboard (composição não pode travar).</li>
+    <li>Ajustes → alterne <b>Escuro/Claro</b> e <b>A−/A+</b> → recarregue a página → preferências persistem.</li>
+    <li>Toque <b>Instalar</b> num script → abre o código cru (aqui é texto — no Firefox+Tampermonkey vira a tela de instalação).</li>
+  </ol>
+</section>
+
+<p><label>Campo de teste do teclado:<br><input class="demo" type="text" placeholder="Toque aqui para abrir o teclado virtual…"></label></p>
+
+<h2>Conteúdo para testar "botão na frente do texto"</h2>
+<p>Texto propositalmente longo para rolagem. O botão, parado, recua em translucidez para não competir com o conteúdo —
+   e pode ser arrastado para onde não atrapalhe. Repare que leitura, contraste e alcance do polegar foram priorizados:
+   alvos de toque de 48 pixels, tema automático e animações desligadas quando o sistema pede redução de movimento.</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eleifend, massa eu posuere pharetra, arcu nisl
+   efficitur erat, eu fringilla lectus nibh eget lacus. Proin nec quam efficitur, suscipit sapien non, dictum sem.
+   Curabitur blandit, felis id aliquet pretium, est mi accumsan lorem, et facilisis justo ipsum et erat. Morbi porta
+   congue velit eu egestas. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis
+   egestas. Sed in risus quis dolor volutpat facilisis. Donec leo eros, varius sit amet cursus eget, pretium dis risus.
+   Aliquam pharetra fermentum massa, at gravida mi convallis in. Praesent semper sodales finibus. Vivamus eleifend
+   tortor lorem, ac imperdiet felis lacinia a. Nullam porta nisi ac facilisis commodo. Maecenas aliquam diam in
+   elementum viverra. Nam pulvinar, elit non pulvinar ornare, velit sapien tristique urna, et dictum lacus lorem
+   in velit. Praesent gravida, urna quis ornare aliquet, enim lacus laoreet ex, nec finibus elit elit a mi.</p>
+
+<script>
+/* Shims GM_* (emula Tampermonkey no navegador) — carregam ANTES do userscript */
+window.GM_getValue = async (k, d) => { const v = localStorage.getItem('ushubdemo:' + k); return v == null ? d : JSON.parse(v); };
+window.GM_setValue = async (k, v) => { localStorage.setItem('ushubdemo:' + k, JSON.stringify(v)); };
+window.GM_xmlhttpRequest = ({ url, onload, onerror }) => {
+  fetch('/gm?u=' + encodeURIComponent(url))
+    .then((r) => r.text().then((t) => onload && onload({ status: r.status, responseText: t })))
+    .catch((e) => onerror && onerror(e));
+};
+window.GM_registerMenuCommand = (label, fn) => {
+  const b = document.createElement('button'); b.textContent = label; b.onclick = fn;
+  document.getElementById('gmbar').appendChild(b); return label;
+};
+</script>
+<script src="/userscripts/ushub.user.js"></script>
+</body>
+</html>
