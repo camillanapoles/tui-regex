@@ -125,4 +125,6 @@ que verde somente se passar nas 4 etapas:
 
 Local: `npm ci && npm test`.
 
+Relatório formal de entrega (solicitado × implementado × testado × gaps): [`docs/ENTREGA.md`](../docs/ENTREGA.md).
+
 Licença MIT.

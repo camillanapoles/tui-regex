@@ -4,13 +4,18 @@ on:
   push:
     branches: [main, 'arena/**']
   pull_request:
+  workflow_dispatch:        # gatilho manual (Actions → test → Run workflow)
+
+concurrency:                # 1 run ativo por ref; um push novo cancela o anterior
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
     name: "Completude USHub (Node ${{ matrix.node }})"
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: false      # um Node falhando não cancela o outro: diagnóstico completo
       matrix:
         node: ['20', '22']
     steps:
@@ -24,14 +29,29 @@ jobs:
       - name: Instalar dependências de teste
         run: npm ci --no-audit --no-fund
 
-      - name: 1/4 · Sintaxe dos userscripts
+      - name: "Portão 1/4 · Sintaxe dos userscripts"
         run: bash tests/syntax.sh
 
-      - name: 2/4 · Validação estática de completude
+      - name: "Portão 2/4 · Validação estática de completude"
         run: node tests/validate-static.js
 
-      - name: 3/4 · Suíte funcional principal (jsdom)
+      - name: "Portão 3/4 · Suíte funcional principal (jsdom)"
         run: node tests/test-main.js
 
-      - name: 4/4 · Casos-limite S1–S8 (jsdom)
+      - name: "Portão 4/4 · Casos-limite S1–S8 (jsdom)"
         run: node tests/test-edge.js
+
+      - name: Resumo do gate
+        run: |
+          {
+            echo "## ✅ USHub — pipeline de completude aprovada";
+            echo "";
+            echo "| Portão | Resultado |";
+            echo "|---|---|";
+            echo "| 1 · Sintaxe (\`node --check\` ×4) | ✅ |";
+            echo "| 2 · Estática: metadados · grants · connects · data-act↔case · IDs↔templates · ícones · hub.json↔arquivos · README↔código · higiene | ✅ |";
+            echo "| 3 · Funcional jsdom (boot → catálogo → instalar → update ⬆ → copiar → busca/IME → tema → A+/A− → persistência → multi-página) | ✅ |";
+            echo "| 4 · Casos-limite S1–S8 (offline · sem hub.json · JSON quebrado · vazio · sem resolução · ocultar FAB · 403+cache · injeção dupla) | ✅ |";
+            echo "";
+            echo "Node \`${{ matrix.node }}\` · ref \`${{ github.ref }}\` · commit \`${{ github.sha }}\`";
+          } >> "$GITHUB_STEP_SUMMARY"
