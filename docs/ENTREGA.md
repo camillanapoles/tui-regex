@@ -3,10 +3,10 @@
 | | |
 |---|---|
 | **Branch** | `arena/01a0b492-tui-regex` |
-| **Data (snapshot)** | 2026-10-11 |
-| **Status** | ✅ CI verde — [Actions](https://github.com/camillanapoles/tui-regex/actions/workflows/test.yml) |
+| **Data (snapshot)** | 2026-10-13 |
+| **Status** | ✅ CI verde — [Actions](https://github.com/camillanapoles/tui-regex/actions/workflows/test.yml) · 🔀 BPMN ativo — [USH-01 #3](https://github.com/camillanapoles/tui-regex/issues/3) |
 | **Produto** | Userscript-hub para **Android mobile** com gestão via **gist público** |
-| **Escopo** | 14 arquivos versionados · ≈ 2.800 linhas (código + testes + docs + CI) |
+| **Escopo** | 20 arquivos versionados · ≈ 3.400 linhas (código + testes + docs + CI + orquestração) |
 
 ---
 
@@ -30,6 +30,7 @@
 | **T2** | "Valide completude" | Validação estática cruzada (9 grupos) · 8 cenários-limite (S1–S8) · **3 robustezes**: `cmpVer` tolera `v1.2.3`; card "⚠ Indisponível" quando `file` não existe no gist; re-render ao limpar a fonte |
 | **T3** | "Sucesso por CI/CD retornado" | Suítes promovidas ao repo · `package.json`+lock · workflow Actions (matriz Node 20/22) · badge · bump actions v5 (**zero warnings**) · **2 runs verdes comprovados por `gh run watch --exit-status`** |
 | **T4** | "Documente tudo + audite o que falta" | Este documento · trigger manual `workflow_dispatch` · `concurrency` (1 run/ref) · resumo do gate no Actions · reconciliação git local↔remoto · auditoria de gaps (item 11) |
+| **T5** | Issues topológicas + gatilho de continuidade + envelope JSON "como BPMN" | `scripts/sequence.json` (cadeia USH-01→04) · `scripts/orchestrator.mjs` (motor: toda action retorna envelope JSON) · workflow `orchestrate.yml` (issue fechada → **testa** → cria a próxima indexada) · workflow `guardian.yml` (sem issues/CI/testes positivos ⇒ CONTINUIDADE) · issue seed **USH-01#3** criada |
 
 ## 3. Stack utilizado
 
@@ -71,7 +72,11 @@ Estado: GM storage (fonte, tema, fontScale 85–140%, posição FAB, instalados,
 | `tests/test-main.js` | 168 | Portão 3 — suíte funcional |
 | `tests/test-edge.js` | 174 | Portão 4 — casos-limite S1–S8 |
 | `tests/syntax.sh` | 8 | Portão 1 — `node --check` ×4 |
-| `.github/workflows/test.yml` | — | Pipeline trigger+gate |
+| `.github/workflows/test.yml` | — | Pipeline de qualidade (4 portões × Node 20/22) |
+| `.github/workflows/orchestrate.yml` | — | BPMN: issue fechada → testa → cria próxima issue |
+| `.github/workflows/guardian.yml` | — | Guardião de continuidade (JSON de estado) |
+| `scripts/orchestrator.mjs` | ≈ 290 | Motor BPMN — envelope JSON padrão em toda action |
+| `scripts/sequence.json` | ≈ 70 | Cadeia topológica USH-01→USH-04 + instruções |
 | `package.json` / `package-lock.json` / `.gitignore` | — | Reprodutibilidade (`npm ci`) |
 | `docs/ENTREGA.md` | — | Este relatório |
 
@@ -114,6 +119,16 @@ push/PR/dispatch ─▶ matrix {Node 20, Node 22} (fail-fast: false)
 Evidências: run [38185794164](https://github.com/camillanapoles/tui-regex/actions/runs/38185794164) `conclusion=success` ×2 jobs, 0 warnings · run anterior 38185743096 também verde. Cada run grava **resumo do gate** na aba Summary do Actions.
 **Gate obrigatório no merge:** exige *Settings → Branches → protection rule* exigindo o status `Completude USHub *` — config de repositório, não versionável em YAML (passo documentado, a 1 clique do dono).
 
+### Ecossistema de workflows (T5 — camada BPMN)
+
+| Workflow | Gatilhos | Papel |
+|---|---|---|
+| `test.yml` | `push` · `pull_request` · `workflow_dispatch` | **Gate de qualidade** — 4 portões; vermelho bloqueia avanço |
+| `orchestrate.yml` | `issues: [closed]` · `workflow_dispatch` (self-test) | **Sequenciador**: fecha issue USH-xx → porta `npm test` → sucesso cria a próxima issue indexada e comenta o envelope JSON na fechada; erro ⇒ envelope `1` + continuidade, sem avançar |
+| `guardian.yml` | `workflow_dispatch` · `schedule` (cron diário — só agenda na `main`; aplicável após USH-03) | **Guardião de continuidade**: verifica "ZERO issues abertas + CI verde + testes presentes". Enquanto não positivo ⇒ envelope `2 · CONTINUIDADE` com a próxima pendência; bloqueio real ⇒ envelope `1` e run vermelha |
+
+**Envelope JSON padrão de TODA action** (codec "como BPMN" — item 12.5): `{ id, acao, mensagem, adendos[], status{code,label}, continuidade, next_issue, ts }` · `0=SUCESSO` · `1=ERRO_BLOQUEANTE` · `2=CONTINUIDADE`. Exit code do job: `1` somente em erro bloqueante; continuidade não suja a pipeline.
+
 ## 10. Produção — pronto para uso pelo usuário final
 
 1. **Instalar** `userscripts/ushub.user.js` (raw do repo) no Firefox Android + Tampermonkey;
@@ -133,11 +148,36 @@ Gestão posterior = editar o gist e subir `version` no `hub.json`. Nenhum backen
 | G6 | Badge só fica verde na `main` após merge/PR | Info | PR a partir deste branch | ⏳ aguardando OK |
 | G7 | iOS fora de escopo | Info | Brief diz Android; Safari userscripts = outro gerenciador | 📌 fora de escopo |
 
-## 12. Próximos passos sugeridos
+## 12. Próximos passos — agora executados por CADEIA TOPOLÓGICA de issues (BPMN)
 
-1. Abrir PR `arena/01a0b492-tui-regex` → `main` (CI já armada como status check);
-2. Criar o gist real e validar G1/G2 no celular (checklist de 6 toques no README);
-3. Ativar branch protection com o status `Completude USHub *`.
+> Cadeia indexada em [`scripts/sequence.json`](../scripts/sequence.json): **USH-01 → USH-02 → USH-03 → USH-04 → DONE**.
+> Cada issue SÓ É CRIADA quando a anterior é **fechada** e o gate (`npm test`) passa. Erro ⇒ não avança.
+
+1. **PR `arena/…` → `main`** — vira a issue **USH-03** (criada automaticamente após USH-02); CI já roda em `pull_request` como status check.
+2. **G2 · gist real** — issue seed **USH-01 · [#3](https://github.com/camillanapoles/tui-regex/issues/3) ABERTA AGORA** (instruções + critério de aceite lá).
+3. **G1 · Android físico** — vira **USH-02** (auto-criada ao fechar USH-01 com sucesso testado).
+4. **Gatilho de continuidade** — `guardian.yml`: verifica "não existência de issues abertas + CI sem erros + testes presentes"; **enquanto não for positivo ⇒ `2 · CONTINUIDADE`** com apontamento da pendência; erro bloqueante ⇒ `1` e run vermelha.
+5. **Instrução encadeada, "como BPMN"** — a cada issue **completada, o orquestrador TESTA a entrega** (porta `npm test`) e **instancia a instrução da issue seguinte, indexada**:
+   - ✅ sucesso testado ⇒ cria a próxima USH (sequência topológica) + comenta o envelope JSON na issue fechada (rastro/token BPMN);
+   - ❌ erro ⇒ envelope com `status.code = 1` ("ERRO_BLOQUEANTE"), `next_issue = a MESMA` (retrabalho) e informações de continuidade — nada avança;
+   - **toda action retorna objeto JSON**: `{ id, acao, mensagem, adendos:[{path}|{file}] (anexos gerados, quando houver), status:{code,label}, continuidade, next_issue, ts }`
+   - codec: **0 SUCESSO · 1 ERRO_BLOQUEANTE · 2 CONTINUIDADE** (STATUS sempre com `label` string; MENSAGEM string pronta ou resumo de log).
+   - motor: [`scripts/orchestrator.mjs`](../scripts/orchestrator.mjs) (zero deps; `self-test` offline valida o formato do envelope — porta A do workflow).
+
+### Exemplo real de envelope (self-test executado em CI)
+
+```json
+{
+  "id": "self-test",
+  "acao": "self-test",
+  "mensagem": "Envelope padrão validado em 3 cenários (advance ok / gate vermelho / DONE).",
+  "adendos": [{ "path": "scripts/orchestrator.mjs" }, { "path": "scripts/sequence.json" }],
+  "status": { "code": 0, "label": "SUCESSO" },
+  "continuidade": false,
+  "next_issue": { "id": "USH-01", "title": "Criar o gist público real e conectar o catálogo" },
+  "ts": "2026-10-13T14:17:31Z"
+}
+```
 
 ---
-*Relatório gerado na rodada T4. Tudo aqui é reproduzível: `npm ci && npm test` + Actions linkado.*
+*Relatório atualizado na rodada T5 (BPMN sobre issues). Tudo reproduzível: `npm ci && npm test` · `node scripts/orchestrator.mjs self-test` · Actions linkado.*

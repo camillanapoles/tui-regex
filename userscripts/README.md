@@ -123,7 +123,7 @@ que verde somente se passar nas 4 etapas:
 4. **Casos-limite S1–S8** (jsdom) — offline, gist sem `hub.json`, JSON quebrado,
    catálogo vazio, fonte sem resolução, ocultar/mostrar botão, 403 com cache, injeção dupla.
 
-Local: `npm ci && npm test`.
+Local: `npm ci && npm test` · orquestração BPMN de pendências: `node scripts/orchestrator.mjs self-test` (workflows `orchestrate` + `guardian`).
 
 Relatório formal de entrega (solicitado × implementado × testado × gaps): [`docs/ENTREGA.md`](../docs/ENTREGA.md).
 
