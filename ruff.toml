@@ -1,0 +1,22 @@
+target-version = "py311"
+line-length = 100
+src = ["team_builder", "tests", "scripts"]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line length (formatting)
+    "B008",  # Depends()/Query() in FastAPI signatures (idiomatic)
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["B017", "B011"]
+# BaseAgent: handlers de FSM são hooks no-op documentados (padrões, não abstratos)
+"team_builder/agents.py" = ["B027"]

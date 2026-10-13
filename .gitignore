@@ -1,2 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+junit*.xml
+wasm-out/
+/evidence/  # só top-level; docs/evidence/ É evidência do produto
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite3
+team_builder.db
+dist/
+build/
 node_modules/
 gate-envelope.json
