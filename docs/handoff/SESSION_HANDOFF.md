@@ -5,22 +5,22 @@
 > deve começar lendo este documento.
 
 ## Estado atual (fatos do repositório)
-- **Commit base:** `45561c18f63c2cf9b5d53bfc59f1d259299601ba` (`45561c1`)
-- **Branch que disparou:** `arena/01a0d0f0-tui-regex`
-- **Gerado em:** 2026-10-13 18:11 UTC
+- **Commit base:** `e9211d5f183fb0dd61416ba1dd0c473ea616134f` (`e9211d5`)
+- **Branch que disparou:** `main`
+- **Gerado em:** 2026-10-13 20:03 UTC
 - **Últimos commits:**
 ```
-45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
-01777b5 chore(continuity): snapshot final (v2 — mecanismo de continuidade validado verde)
-7325867 chore(ci): remove gatilho temporário — Session Continuity final (push main + dispatch); fix corpo 403 no diagnóstico
-d037bc5 feat(ci): handoff resiliente — draft PR best-effort (403 publica nota no branch; continuidade garantida pelo branch) + corpo HTTP no diagnóstico
-fb6f427 fix(ci): diagnóstico captura stderr do python + corpo da resposta HTTP (causa raiz do passo de PR)
-4a4c2ca fix(ci): passo de PR via REST puro (stdlib) + auto-diagnóstico commitado no branch de handoff
-d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prova de fogo (push trigger)
-69f16f8 feat(ci): Session Continuity — handoff automático no fim da sessão (gate verde + branch handoff/ + draft PR de retomada) + snapshot de continuidade commitado
+e9211d5 Merge pull request #11 from camillanapoles/arena/01a0b492-tui-regex
+484b99c Merge branch 'main' into arena/01a0b492-tui-regex
+e8a28a6 Merge pull request #9 from camillanapoles/arena/01a0d0f0-tui-regex
+b7bedc9 Merge pull request #6 from camillanapoles/handoff/45561c1-20261013-1811
+8f3c2ca Merge branch 'arena/01a0d0f0-tui-regex' into handoff/45561c1-20261013-1811
+bdede09 Merge pull request #1 from camillanapoles/arena/01a0d0f0-tui-regex
+9a8041c Merge branch 'main' into arena/01a0d0f0-tui-regex
+521ab3f chore(continuity): snapshot v3 completo (session + git_op) — toggle validado
 ```
 - **PRs abertos:**
-(nenhum PR aberto para `arena/01a0d0f0-tui-regex` ou `gh` indisponível no runner)
+(nenhum PR aberto para `main` ou `gh` indisponível no runner)
 
 ## Como retomar (second way) — passo a passo
 1. Criar/abrir nova sessão de agente neste repositório e apontá-la para o branch
@@ -32,7 +32,7 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
    .venv/bin/uvicorn team_builder.api:app --host 0.0.0.0 --port 8000
    curl localhost:8000/continuity/stats
    curl localhost:8000/continuity/session/current
-   curl localhost:8000/continuity/git_op/branch/arena/01a0d0f0-tui-regex
+   curl localhost:8000/continuity/git_op/branch/main
    ```
 4. Validar o estado antes de agir: `pytest -q` (158 testes) e `python scripts/validate_wat.py`.
 5. Atualizar `session/current` via `PUT /continuity/session/current`
@@ -43,10 +43,10 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
 ## Snapshot de continuidade (última gravação persistida)
 ```json
 {
-  "captured_at": "2026-10-13T14:26:39.094874+00:00",
+  "captured_at": "2026-10-13T18:16:05.942610+00:00",
   "source": "http://localhost:8000",
   "branch": "arena/01a0d0f0-tui-regex",
-  "head": "73258679ac66743f3e5aa343b38b9a141e6c0edd",
+  "head": "e125edfeb5b553525299b183c06626de13014279",
   "stats": {
     "total_objects": 2,
     "kinds_in_db": [
@@ -64,34 +64,31 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
     "session/current": {
       "kind": "session",
       "key": "current",
-      "version": 2,
+      "version": 1,
       "data": {
         "branch": "arena/01a0d0f0-tui-regex",
-        "last_commit": "7325867",
+        "last_commit": "5a23ad3",
         "pr": 1,
-        "handoff_pr": 4,
-        "step": "session_continuity_mechanism_verified_green",
-        "next": "merge PR#1 -> handoff canonico da main; E0.1 hash-chain; toggle Actions p/ draft-PR automatico"
+        "handoff_pr": 6,
+        "step": "toggle_validado_draft_pr_automatico",
+        "next": "merge PR#1 -> handoff canonico da main (draft PR automatico); E0.1 hash-chain"
       },
-      "updated_at": "2026-10-13T14:26:36.531925",
-      "gate_id": "gate-2d17c546cca44298a9be32d2354e873e"
+      "updated_at": "2026-10-13T18:16:00.696247",
+      "gate_id": "gate-038a8fa5d78e44c0aa712767a76eb3c9"
     },
     "git_op/branch/arena/01a0d0f0-tui-regex": {
       "kind": "git_op",
       "key": "branch/arena/01a0d0f0-tui-regex",
       "version": 1,
       "data": {
-        "kind": "git_op",
-        "remote": "https://github.com/camillanapoles/tui-regex.git",
         "branch": "arena/01a0d0f0-tui-regex",
-        "commit": "efc57ad6e35d7aed801bdc762fdbd04c5ca506a5",
-        "pr_number": null,
-        "pr_url": "",
-        "status": "pending",
-        "last_error": ""
+        "commit": "e125edf",
+        "pr": 1,
+        "handoff_pr": 6,
+        "state": "toggle_validado"
       },
-      "updated_at": "2026-10-13T13:58:58.642872",
-      "gate_id": "gate-95cba5a98f9e482ead6d800c5d45f86d"
+      "updated_at": "2026-10-13T18:16:05.886596",
+      "gate_id": "gate-7ddade1e055e4c3f979e3444424e9eb7"
     }
   }
 }
