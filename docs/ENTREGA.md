@@ -129,6 +129,8 @@ Evidências: run [38185794164](https://github.com/camillanapoles/tui-regex/actio
 
 **Envelope JSON padrão de TODA action** (codec "como BPMN" — item 12.5): `{ id, acao, mensagem, adendos[], status{code,label}, continuidade, next_issue, ts }` · `0=SUCESSO` · `1=ERRO_BLOQUEANTE` · `2=CONTINUIDADE`. Exit code do job: `1` somente em erro bloqueante; continuidade não suja a pipeline.
 
+> ⚠️ **Regra do GitHub Actions medida em produção (run 38412578141):** eventos `issues`/`issue_comment`, `schedule` e `workflow_dispatch` executam o arquivo de workflow **da branch padrão (`main`)** — portanto `orchestrate` e `guardian` ativam plenamente **após o merge desta branch** (dispatch manual devolve 404 enquanto o arquivo só existe na branch de trabalho). O gate de qualidade (`test.yml`, evento `push`) já roda por branch, verde em 3 pushes consecutivos. Até o merge, a camada BPMN é reproduzível localmente: `node scripts/orchestrator.mjs self-test|report|advance --dry-run`.
+
 ## 10. Produção — pronto para uso pelo usuário final
 
 1. **Instalar** `userscripts/ushub.user.js` (raw do repo) no Firefox Android + Tampermonkey;
