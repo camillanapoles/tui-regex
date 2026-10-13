@@ -31,6 +31,12 @@ window.GM_registerMenuCommand = (label, fn) => { menus.push({ label, fn }); };
 window.GM_xmlhttpRequest = ({ url, onload }) => {
   setTimeout(() => {
     const u = url.replace(/[?&]_ushub=\d+/g, '').replace(/\?$/, '');
+    // Catálogo de FÁBRICA (URL crua do próprio repo público + arquivos-irmãos)
+    if (u === 'https://raw.githubusercontent.com/camillanapoles/tui-regex/main/userscripts/gist/hub.json') {
+      return onload({ status: 200, responseText: JSON.stringify(hub) });
+    }
+    const sib = u.match(/userscripts\/gist\/([^/]+\.user\.js)$/);
+    if (sib && scripts[sib[1]]) return onload({ status: 200, responseText: scripts[sib[1]] });
     if (u === `https://api.github.com/gists/${GIST_ID}`) {
       const filesApi = { 'hub.json': { raw_url: `${rawBase}/hub.json` } };
       for (const n of Object.keys(scripts)) filesApi[n] = { raw_url: `${rawBase}/${n}` };
@@ -74,15 +80,19 @@ const $$s = (sel) => [...dom.window.document.getElementById('ushub-host').shadow
   assert.strictEqual(fab.style.transform.includes('translate3d'), true, 'FAB posicionado');
   assert.strictEqual(menus.length, 2, '2 comandos de menu: ' + menus.map((m) => m.label).join(' | '));
 
-  // 2) abre painel sem fonte → onboarding
+  // 2) abre painel → catálogo de FÁBRICA carrega sozinho (zero-config)
   menus[0].fn();
+  await wait(60);
   const sheet = $s('#sheet');
   assert(sheet.classList.contains('open'), 'sheet abriu');
-  assert($s('#main').innerHTML.includes('Bem-vindo ao USHub'), 'onboarding exibido sem fonte configurada');
+  assert.strictEqual($$s('.card').length, 3, 'catálogo de fábrica pré-carregado: 3 cartões');
+  assert($s('#main').innerHTML.includes('Leitor Conforto'), 'card de fábrica presente');
+  assert.strictEqual($$s('[data-act="install"]').length, 3, 'instaláveis de fábrica');
 
-  // 3) vai para Ajustes via aba e salva a URL do gist
+  // 3) Ajustes mostram a fonte padrão pré-preenchida; troca para o gist (caminho API)
   host.shadowRoot.querySelector('[data-tab="config"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true, composed: true }));
   assert($s('#main').innerHTML.includes('Fonte do catálogo'), 'aba Ajustes renderizou');
+  assert($s('#srcUrl').value.includes('raw.githubusercontent.com/camillanapoles/tui-regex'), 'fonte padrão de fábrica pré-preenchida');
   $s('#srcUrl').value = `https://gist.github.com/camillanapoles/${GIST_ID}`;
   $s('[data-act="save-url"]').click();
   await wait(60);
@@ -133,7 +143,7 @@ const $$s = (sel) => [...dom.window.document.getElementById('ushub-host').shadow
   // 10) persistência entre "sessões" (save() tem debounce de 250ms — aguardar o flush)
   await wait(400);
   const saved = JSON.parse(JSON.stringify(store['ushub:state:v1']));
-  assert.strictEqual(saved.manifestUrl.includes(GIST_ID), true, 'URL do gist persistida');
+  assert.strictEqual(saved.manifestUrl.includes(GIST_ID), true, 'URL do gist persistida (após troca)');
   assert.ok(saved.installed['leitor-conforto'], 'instalação persistida');
   assert.strictEqual(saved.ui.theme, 'dark', 'tema persistido');
   assert.strictEqual(saved.ui.fontScale, 1.05, 'fontScale persistido');

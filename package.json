@@ -4,7 +4,8 @@
   "private": true,
   "description": "USHub — botão central de userscripts (Android) gerenciado via gist público (hub.json + N arquivos .user.js)",
   "scripts": {
-    "test": "bash tests/syntax.sh && node tests/validate-static.js && node tests/test-main.js && node tests/test-edge.js"
+    "test": "bash tests/syntax.sh && node tests/validate-static.js && node tests/test-main.js && node tests/test-edge.js",
+    "demo": "node demo/dev-server.mjs"
   },
   "devDependencies": {
     "jsdom": "^24.1.3"

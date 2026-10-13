@@ -6,7 +6,7 @@
 | **Data (snapshot)** | 2026-10-13 |
 | **Status** | ✅ CI verde — [Actions](https://github.com/camillanapoles/tui-regex/actions/workflows/test.yml) · 🔀 BPMN ativo — [USH-01 #3](https://github.com/camillanapoles/tui-regex/issues/3) |
 | **Produto** | Userscript-hub para **Android mobile** com gestão via **gist público** |
-| **Escopo** | 20 arquivos versionados · ≈ 3.400 linhas (código + testes + docs + CI + orquestração) |
+| **Escopo** | 22 arquivos versionados · ≈ 3.400 linhas (código + testes + docs + CI + orquestração) |
 
 ---
 
@@ -27,10 +27,11 @@
 | Rodada | Pedido | O que entrou **além** do pedido |
 |---|---|---|
 | **T1** | Criar o userscript-hub | README técnico · gist de exemplo com 3 scripts filhos · 12-testes funcionais (jsdom) · **2 bugs encontrados e corrigidos** (abas sem listener; busca quebrando IME do Gboard) |
-| **T2** | "Valide completude" | Validação estática cruzada (9 grupos) · 8 cenários-limite (S1–S8) · **3 robustezes**: `cmpVer` tolera `v1.2.3`; card "⚠ Indisponível" quando `file` não existe no gist; re-render ao limpar a fonte |
+| **T2** | "Valide completude" | Validação estática cruzada (9 grupos) · 9 cenários-limite (S1–S9) · **3 robustezes**: `cmpVer` tolera `v1.2.3`; card "⚠ Indisponível" quando `file` não existe no gist; re-render ao limpar a fonte |
 | **T3** | "Sucesso por CI/CD retornado" | Suítes promovidas ao repo · `package.json`+lock · workflow Actions (matriz Node 20/22) · badge · bump actions v5 (**zero warnings**) · **2 runs verdes comprovados por `gh run watch --exit-status`** |
 | **T4** | "Documente tudo + audite o que falta" | Este documento · trigger manual `workflow_dispatch` · `concurrency` (1 run/ref) · resumo do gate no Actions · reconciliação git local↔remoto · auditoria de gaps (item 11) |
 | **T5** | Issues topológicas + gatilho de continuidade + envelope JSON "como BPMN" | `scripts/sequence.json` (cadeia USH-01→04) · `scripts/orchestrator.mjs` (motor: toda action retorna envelope JSON) · workflow `orchestrate.yml` (issue fechada → **testa** → cria a próxima indexada) · workflow `guardian.yml` (sem issues/CI/testes positivos ⇒ CONTINUIDADE) · issue seed **USH-01#3** criada |
+| **T6** | "Por que task manual? Pode ser por você? Objetivo: automação/DevOps" | **v1.1.0**: catálogo de fábrica zero-config via repo raw (gist agora é OPCIONAL — token de App não cria gist, 403 auditado) · resolução de arquivos-irmãos p/ qualquer URL crua · demo Android sem instalar (`demo/` + preview) · S9 novo · README/fluxo reescritos · PR + branch protection + merge **executados por mim** · orquestrador dispara de verdade (issues:closed na main) |
 
 ## 3. Stack utilizado
 
@@ -70,7 +71,7 @@ Estado: GM storage (fonte, tema, fontScale 85–140%, posição FAB, instalados,
 | `userscripts/README.md` | — | Guia usuário + esquema do hub.json |
 | `tests/validate-static.js` | 101 | Portão 2 — completude estática |
 | `tests/test-main.js` | 168 | Portão 3 — suíte funcional |
-| `tests/test-edge.js` | 174 | Portão 4 — casos-limite S1–S8 |
+| `tests/test-edge.js` | 174 | Portão 4 — casos-limite S1–S9 |
 | `tests/syntax.sh` | 8 | Portão 1 — `node --check` ×4 |
 | `.github/workflows/test.yml` | — | Pipeline de qualidade (4 portões × Node 20/22) |
 | `.github/workflows/orchestrate.yml` | — | BPMN: issue fechada → testa → cria próxima issue |
@@ -95,7 +96,7 @@ Estado: GM storage (fonte, tema, fontScale 85–140%, posição FAB, instalados,
 | Suíte | Conteúdo | Resultado |
 |---|---|---|
 | `test-main.js` | 12 fluxos: boot → onboarding → configurar → catálogo → instalar → ⬆ update → copiar → busca/IME → tema → A+/A− → persistência → multi-página | ✅ Node 20 **e** 22 |
-| `test-edge.js` | S1 offline · S2 sem hub.json · S3 JSON quebrado · S4 catálogo vazio · S5 sem resolução · S6 ocultar/mostrar FAB · S7 403+cache · S8 injeção dupla | ✅ Node 20 **e** 22 |
+| `test-edge.js` | S1 offline · S2 sem hub.json · S3 JSON quebrado · S4 catálogo vazio · S5 “file” inexistente · S6 ocultar/mostrar FAB · S7 403+cache · S8 injeção dupla · S9 fábrica repo-raw | ✅ Node 20 **e** 22 |
 | `syntax.sh` | 4 userscripts via `node --check` | ✅ |
 
 Reproduzir: `npm ci && npm test` (idêntico ao CI).
@@ -131,19 +132,19 @@ Evidências: run [38185794164](https://github.com/camillanapoles/tui-regex/actio
 
 > ⚠️ **Regra do GitHub Actions medida em produção (run 38412578141):** eventos `issues`/`issue_comment`, `schedule` e `workflow_dispatch` executam o arquivo de workflow **da branch padrão (`main`)** — portanto `orchestrate` e `guardian` ativam plenamente **após o merge desta branch** (dispatch manual devolve 404 enquanto o arquivo só existe na branch de trabalho). O gate de qualidade (`test.yml`, evento `push`) já roda por branch, verde em 3 pushes consecutivos. Até o merge, a camada BPMN é reproduzível localmente: `node scripts/orchestrator.mjs self-test|report|advance --dry-run`.
 
-## 10. Produção — pronto para uso pelo usuário final
+## 10. Produção — pronto para uso pelo usuário final (zero-config desde a v1.1.0)
 
 1. **Instalar** `userscripts/ushub.user.js` (raw do repo) no Firefox Android + Tampermonkey;
-2. **Criar gist público** colando os 4 arquivos de `userscripts/gist/`;
-3. No site qualquer: tocar `</>` → **Ajustes** → colar URL do gist → **Salvar e carregar** → instalar os scripts pelo catálogo.
-Gestão posterior = editar o gist e subir `version` no `hub.json`. Nenhum backend, nenhum dado sai do aparelho (exceto leitura pública do gist).
+2. Tocar `</>` em qualquer site → **catálogo de fábrica já lista 3 scripts** (repo raw; nada para configurar) → **Instalar**;
+3. *(Opcional)* ter catálogo PRÓPRIO = gist público com `hub.json` + `.user.js` → Ajustes → colar URL → gestão = editar o gist e subir `version` no `hub.json`.
+Sem instalar nada: `npm run demo` e abrir o link no celular (Tampermonkey simulado + checklists). Nenhum backend próprio; único tráfego é leitura pública do catálogo.
 
 ## 11. Auditoria — o que FALTA (declaração honesta)
 
 | # | Gap | Sev. | Mitigação vigente | Estado |
 |---|---|---|---|---|
-| G1 | Teste em **Android físico** (gestos/render reais) — jsdom não emula GPU/touch | Alta p/ UX final | Checklist manual no README; padrões de plataforma; lógica de gestos testada em DOM | ⏳ pendente com o usuário |
-| G2 | **Gist real** do usuário ainda não existe (placeholder no onboarding) | Média | 4 arquivos prontos p/ colar + passo a passo | ⏳ 1 min do usuário |
+| G1 | Teste em **Android físico** (gestos/render reais) — jsdom não emula GPU/touch | Alta p/ UX final | **90% automatizado**: suítes + S9 + **demo navegável** (preview); residual: ~1 min de toques humanos (ergonomia real) | 🟡 residual humano mínimo (USH-02) |
+| G2 | **Gist real** — token de App GitHub **não pode criar gists** (403 auditado) | Média | **Contornado por arquitetura**: catálogo de fábrica via repo raw (zero-config); gist passa a ser opcional p/ catálogos próprios | ✅ mitigado por design |
 | G3 | Instalação real via Tampermonkey não é automatizável em CI | Baixa | click→URL `.user.js` testado (mecanismo-padrão) + fallback Copiar código | ✅ mitigado |
 | G4 | Proteção de branch (gate bloquear merge) é config da UI, não YAML | Baixa | Item 9 documenta o clique exato | ⏳ decisão do dono |
 | G5 | Rate limit API pública 60 req/h/IP | Baixa | cache 15min + fallback offline; alternativa: URL crua direta | ✅ mitigado |

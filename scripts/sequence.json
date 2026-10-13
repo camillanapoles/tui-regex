@@ -6,13 +6,13 @@
     {
       "id": "USH-01",
       "gap": "G2",
-      "type": "manual",
-      "title": "Criar o gist público real e conectar o catálogo",
+      "type": "semi",
+      "title": "Confirmar o catálogo de fábrica carregando (zero-config)",
       "instrucao": [
-        "Crie um gist PÚBLICO em gist.github.com.",
-        "Cole os 4 arquivos de userscripts/gist/ (hub.json + 3 .user.js) sem renomear.",
-        "No celular, abra qualquer site → toque no botão </> → Aba Ajustes → cole a URL do gist → Salvar e carregar.",
-        "Critério de aceite: o catálogo lista os 3 scripts com botão Instalar.",
+        "Desde a v1.1.0 o catálogo padrão vem do próprio repo (raw.githubusercontent) — gist próprio é opcional.",
+        "Automatizado: suite S9 prova resolução de arquivos-irmãos + instalação a partir da URL crua do repo.",
+        "Humano (1 min): abrir o link do demo npm run demo no Android → catálogo lista 3 scripts sem configurar nada.",
+        "Critério de aceite: catálogo visível com 3 scripts e botão Instalar.",
         "Concluiu? FECHE esta issue — o orquestrador testa tudo e cria a próxima (USH-02) automaticamente."
       ]
     },

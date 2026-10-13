@@ -30,13 +30,25 @@ mesmo gist.
 1. **Firefox para Android** + extensão **Tampermonkey** (ou Violentmonkey).
 2. Instale `ushub.user.js` (abra o arquivo raw deste repositório — o gerenciador
    intercepta `.user.js` automaticamente).
-3. Crie um **gist público** em `gist.github.com` e adicione, no **mesmo gist**:
-   - `hub.json` — use o de `userscripts/gist/` como modelo;
-   - os arquivos `.user.js` que quiser distribuir (há 3 exemplos prontos).
-4. Abra qualquer site, toque no **botão flutuante `</>`**, vá em **Ajustes** e
-   cole a **URL do gist** → **Salvar e carregar**. Pronto.
-5. No catálogo, toque **Instalar** em cada script — o gerenciador abre a tela de
-   instalação dele (a “captura real” dos scripts, a partir de um único lugar).
+3. Abra qualquer site e toque no **botão flutuante `</>`** — o **catálogo de
+   fábrica** (este repositório, via `raw.githubusercontent.com`) já carrega os
+   3 scripts de exemplo **sem configurar nada**.
+4. Toque **Instalar** — o gerenciador abre a tela de instalação (a “captura
+   real” dos scripts, a partir de um único lugar).
+
+### Catálogo PRÓPRIO (opcional) — gestão via gist público
+
+1. Crie um **gist público** em `gist.github.com` com `hub.json` + quantos
+   `.user.js` quiser, no **mesmo gist** (use `userscripts/gist/` como modelo).
+2. No painel → **Ajustes** → cole a **URL do gist** (ou ID, ou a URL crua do
+   `hub.json` de qualquer repo/host estático — arquivos-irmãos são resolvidos)
+   → **Salvar e carregar**. Campo vazio restaura o catálogo de fábrica.
+
+### Validar no celular SEM instalar nada (demo)
+
+`npm run demo` sobe uma página que executa o `ushub.user.js` **real** com
+`GM_*` emulados (`demo/index.html` + `demo/dev-server.mjs`). Abra o endereço
+no navegador do Android e rode o checklist de toques da própria página.
 
 ## Por que as decisões de UX são assim
 

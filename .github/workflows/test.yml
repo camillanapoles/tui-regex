@@ -38,7 +38,7 @@ jobs:
       - name: "Portão 3/4 · Suíte funcional principal (jsdom)"
         run: node tests/test-main.js
 
-      - name: "Portão 4/4 · Casos-limite S1–S8 (jsdom)"
+      - name: "Portão 4/4 · Casos-limite S1–S9 (jsdom)"
         run: node tests/test-edge.js
 
       - name: Resumo do gate
@@ -51,7 +51,7 @@ jobs:
             echo "| 1 · Sintaxe (\`node --check\` ×4) | ✅ |";
             echo "| 2 · Estática: metadados · grants · connects · data-act↔case · IDs↔templates · ícones · hub.json↔arquivos · README↔código · higiene | ✅ |";
             echo "| 3 · Funcional jsdom (boot → catálogo → instalar → update ⬆ → copiar → busca/IME → tema → A+/A− → persistência → multi-página) | ✅ |";
-            echo "| 4 · Casos-limite S1–S8 (offline · sem hub.json · JSON quebrado · vazio · sem resolução · ocultar FAB · 403+cache · injeção dupla) | ✅ |";
+            echo "| 4 · Casos-limite S1–S9 (offline · sem hub.json · JSON quebrado · vazio · file inexistente · ocultar FAB · 403+cache · injeção dupla · fábrica repo-raw) | ✅ |";
             echo "";
             echo "Node \`${{ matrix.node }}\` · ref \`${{ github.ref }}\` · commit \`${{ github.sha }}\`";
           } >> "$GITHUB_STEP_SUMMARY"

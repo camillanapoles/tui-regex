@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         USHub · botão central de userscripts (Android)
 // @namespace    https://github.com/camillanapoles/tui-regex
-// @version      1.0.0
+// @version      1.1.0
 // @description  Botão flutuante de máxima usabilidade que abre um hub/catálogo de userscripts gerenciado por um gist público: gestão via hub.json + múltiplos arquivos .user.js em um único local. Otimizado para Android (Firefox + Tampermonkey/Violentmonkey).
 // @author       camillanapoles
 // @license      MIT
@@ -41,10 +41,13 @@
   if (window.__USHUB_V1__) return;
   window.__USHUB_V1__ = true;
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const LS_KEY = 'ushub:state:v1';
   const CAT_CACHE_MAX_AGE = 15 * 60 * 1000; // 15 min de cache do catálogo
   const PLACEHOLDER_URL = 'https://gist.github.com/SEU_USUARIO/SEU_GIST_ID';
+  /* Catálogo de fábrica: o próprio repositório público (raw). Funciona sem gist;
+     para distribuir o SEU catálogo, aponte outra fonte nos Ajustes. */
+  const DEFAULT_SOURCE = 'https://raw.githubusercontent.com/camillanapoles/tui-regex/main/userscripts/gist/hub.json';
 
   /* ============================================================
    * 1. STORAGE — GM_* com fallback para localStorage
@@ -162,11 +165,17 @@
       if (!hubName) throw new Error('Esse gist não tem um arquivo hub.json');
       manifestRawUrl = apiFiles[hubName].raw_url;
     } else {
-      // URL crua direta para o JSON (compatibilidade; sem resolução de "file")
+      // URL crua direta para o JSON (repo público, static host etc.)
       manifestRawUrl = source;
     }
 
     const manifest = JSON.parse(await httpGet(bust(manifestRawUrl)));
+    /* Resolve "file": (1) mapa da API do gist quando houver; (2) fallback —
+       arquivo-irmão ao lado do hub.json (raw do repo, GitHub Pages, S3…). */
+    const sibling = (file) => {
+      const i = manifestRawUrl.lastIndexOf('/');
+      return i > 8 ? manifestRawUrl.slice(0, i + 1) + String(file).split('/').pop() : null;
+    };
     const scripts = (Array.isArray(manifest.scripts) ? manifest.scripts : []).map((s) => {
       let raw = s.url || null;
       if (!raw && s.file && apiFiles) {
@@ -176,6 +185,7 @@
           if (k) raw = apiFiles[k].raw_url;
         }
       }
+      if (!raw && s.file && !apiFiles) raw = sibling(s.file);
       return Object.assign({}, s, { raw });
     });
 
@@ -802,12 +812,11 @@
       return `
         <div class="empty">
           <span class="big" aria-hidden="true">📦</span>
-          <p><b>Bem-vindo ao USHub.</b></p>
-          <p>Este botão é a sua central de userscripts. Para começar, aponte a URL do seu <b>gist público</b> (o que tem o <code>hub.json</code> + os arquivos <code>.user.js</code>) na aba <b>Ajustes</b>.</p>
+          <p><b>Catálogo vazio.</b></p>
+          <p>Abra <b>Ajustes</b> e <b>salve com o campo vazio</b> para restaurar o catálogo de fábrica — ou aponte um gist/URL crua seu.</p>
           <div class="actions" style="display:flex;gap:8px;margin-top:14px">
-            <button class="btn pri" data-act="go-config">${ICONS.gear} Configurar fonte agora</button>
+            <button class="btn pri" data-act="go-config">${ICONS.gear} Abrir Ajustes</button>
           </div>
-          <p class="help">Ex.: <code>${esc(PLACEHOLDER_URL)}</code></p>
         </div>`;
     }
     if (loading && !(state.cache && state.cache.data)) {
@@ -851,7 +860,7 @@
           <input id="srcUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
                  placeholder="${esc(PLACEHOLDER_URL)}"
                  value="${esc(state.manifestUrl)}" aria-label="URL do gist ou do hub.json">
-          <p class="help">Cole a URL da <b>página do gist</b> (recomendado), o <b>ID do gist</b> ou a URL crua do <code>hub.json</code>.</p>
+          <p class="help">Aceita URL do <b>gist</b>, <b>ID do gist</b> ou <b>URL crua</b> do <code>hub.json</code> (repo público/host estático — arquivos ao lado são resolvidos). <b>Vazio = catálogo de fábrica</b>.</p>
         </div>
         <div class="actions" style="display:flex;gap:8px;margin-top:10px">
           <button class="btn pri" data-act="save-url" style="flex:1 1 auto">Salvar e carregar</button>
@@ -1022,12 +1031,12 @@
       case 'fab-reset': state.ui.fab = { edge: 'right', yRatio: 0.72 }; save(); fabPlace(true); toast('Posição do botão restaurada.'); break;
       case 'save-url': {
         const inp = $('#srcUrl');
-        const v = inp ? inp.value.trim() : '';
+        let v = inp ? inp.value.trim() : '';
+        if (!v) v = DEFAULT_SOURCE; // vazio = restaura o catálogo de fábrica
         state.manifestUrl = v;
         state.cache = null; // fonte mudou → cache antigo não vale mais
         save();
-        if (!v) { toast('Fonte removida. Configure um gist para usar o catálogo.'); render(); break; }
-        toast('Fonte salva — carregando catálogo…');
+        toast(v === DEFAULT_SOURCE ? 'Catálogo de fábrica restaurado ✓' : 'Fonte salva — carregando catálogo…');
         state.ui.tab = 'catalogo';
         save();
         refreshCatalog(true);
@@ -1065,6 +1074,12 @@
     state.ui = Object.assign(defaultState().ui, state.ui || {});
     state.ui.fab = Object.assign(defaultState().ui.fab, (state.ui && state.ui.fab) || {});
     state.installed = state.installed || {};
+
+    // Primeira execução: catálogo de fábrica já vem ligado (troque nos Ajustes).
+    if (!String(state.manifestUrl || '').trim()) {
+      state.manifestUrl = DEFAULT_SOURCE;
+      save();
+    }
 
     (document.body || document.documentElement).appendChild(host);
     applyAppearance();

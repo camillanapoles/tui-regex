@@ -29,7 +29,7 @@ function makeDom(netImpl, preset) {
   return w;
 }
 
-function net({ apiFiles, hubBody, status = 200, fail = false }) {
+function net({ apiFiles, hubBody, status = 200, fail = false, scriptsFiles = {} }) {
   return ({ url, onload, onerror }) => setTimeout(() => {
     if (fail) return onerror(new Error('offline'));
     const u = url.replace(/[?&]_ushub=\d+/g, '').replace(/\?$/, '');
@@ -41,6 +41,8 @@ function net({ apiFiles, hubBody, status = 200, fail = false }) {
       if (status !== 200) return onload({ status, responseText: 'err' });
       return onload({ status: 200, responseText: hubBody });
     }
+    const sf = u.match(/\/([^/?]+\.user\.js)$/);
+    if (sf && scriptsFiles[sf[1]]) return onload({ status: 200, responseText: scriptsFiles[sf[1]] });
     return onload({ status: 404, responseText: 'nf' });
   }, 0);
 }
@@ -103,20 +105,22 @@ const S = (w, sel) => w.document.getElementById('ushub-host').shadowRoot.querySe
     console.log('S4 ✓ catálogo vazio → UI consistente, badge oculto');
   }
 
-  /* S5 — URL crua direta (sem ID de gist): "file" não resolve → botões desabilitam com aviso */
+  /* S5 — gist cujo hub.json declara "file" inexistente no gist → Indisponível */
   {
     const hubBody = JSON.stringify({ hub: 'Externo', scripts: [
       { id: 'x', name: 'Sem Arquivo', version: '1.0.0', file: 'x.user.js', description: 'teste' }
     ] });
-    const w = makeDom(net({ hubBody }));
+    const w = makeDom(net({
+      apiFiles: { 'hub.json': { raw_url: rawBase + '/hub.json' } }, // gist SEM x.user.js
+      hubBody
+    }));
     w.eval(src); await wait(25);
-    await configurarFonte(w, 'https://example.com/hub.json');
+    await configurarFonte(w, `https://gist.github.com/camillanapoles/${GIST_ID}`);
     const html = S(w, '#main').innerHTML;
     assert(html.includes('ausente no gist'), 'S5: aviso de arquivo ausente');
     assert(html.includes('Indisponível'), 'S5: botão principal desabilitado');
-    assert(!S(w, '[data-act="install"]'), 'S5: nenhum instalável sem fonte');
-    S(w, '#main').querySelector('button[disabled]');
-    console.log('S5 ✓ fonte sem resolução de arquivo → estado “Indisponível” explícito');
+    assert(!S(w, '[data-act="install"]'), 'S5: nenhum instalável sem arquivo real');
+    console.log('S5 ✓ “file” declarado mas inexistente → estado “Indisponível” explícito');
   }
 
   /* S6 — ocultar/mostrar botão flutuante (config + menu do gerenciador) */
@@ -169,6 +173,26 @@ const S = (w, sel) => w.document.getElementById('ushub-host').shadowRoot.querySe
     console.log('S8 ✓ execução dupla neutralizada');
   }
 
-  console.log('\n✅ TODOS OS CASOS-LIMITE PASSARAM (S1–S8)');
+  /* S9 — catálogo de FÁBRICA: URL crua do repo resolve arquivos-irmãos e instala */
+  {
+    const w = makeDom(net({
+      hubBody: JSON.stringify({ hub: 'Fábrica', scripts: [
+        { id: 'fx', name: 'Filho X', emoji: '🧪', version: '1.0.0', file: 'leitor-conforto.user.js', description: 'ok', tags: [] }
+      ] }),
+      scriptsFiles: { 'leitor-conforto.user.js': '// ==UserScript==\n// @name X\n// ==/UserScript==\n' }
+    }));
+    w.eval(src); await wait(70);   // boot: preenche DEFAULT_SOURCE + refresh em background
+    w.__menus[0].fn(); await wait(70);
+    const html = S(w, '#main').innerHTML;
+    assert(html.includes('Filho X'), 'S9: card via URL crua (sem gist/API)');
+    const installBtn = S(w, '[data-act="install"]');
+    assert(installBtn, 'S9: instalável pela resolução de arquivos-irmãos');
+    installBtn.click(); await wait(30);
+    assert(String(w.__opened[0] || '').includes('userscripts/gist/leitor-conforto.user.js'),
+      'S9: instalador abriu a URL irmã do repo: ' + w.__opened[0]);
+    console.log('S9 ✓ catálogo de fábrica (repo raw) resolve irmãos e instala');
+  }
+
+  console.log('\n✅ TODOS OS CASOS-LIMITE PASSARAM (S1–S9)');
   process.exit(0);
 })().catch((e) => { console.error('\n❌ FALHOU:', e.message); process.exit(1); });
