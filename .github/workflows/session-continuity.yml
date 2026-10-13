@@ -20,12 +20,10 @@ name: Session Continuity
 # ─────────────────────────────────────────────────────────────────────────
 on:
   push:
-    # main = gatilho PERMANENTE (dispara no merge da sessão, webhook nativo do GitHub).
-    # arena/... = gatilho TEMPORÁRIO, apenas para a prova de fogo desta entrega
-    # (idêntico evento de push) — será removido em seguida.
-    branches:
-      - main
-      - arena/01a0d0f0-tui-regex
+    # Dispara no merge da sessão em `main` (webhook nativo do GitHub).
+    # (Este workflow também pode ser disparado manualmente — "via GH" — com:
+    #    gh workflow run session-continuity.yml [--ref <branch>])
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -103,6 +101,7 @@ jobs:
                       return json.loads(resp.read() or b"null")
               except urllib.error.HTTPError as exc:
                   body = exc.read().decode(errors="replace")
+                  exc.body = body  # anexa p/ quem tratá-la depois (read só funciona 1x)
                   print(f"HTTP {exc.code} {exc.reason} em {method} {exc.url}")
                   print("response body:", body[:2000])
                   raise
@@ -125,7 +124,7 @@ jobs:
                   })
                   print(f"Draft PR de retomada criado: #{pr['number']} {pr['html_url']}")
               except urllib.error.HTTPError as exc:
-                  body = exc.read().decode(errors="replace")
+                  body = getattr(exc, "body", "")
                   # 403/404: o toggle 'Allow GitHub Actions to create and update
                   # pull requests' está desligado (ou token sem permissão).
                   # A CONTINUIDADE NÃO É AFETADA: o branch de handoff já foi
