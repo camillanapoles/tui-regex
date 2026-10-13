@@ -69,17 +69,63 @@ jobs:
           git push origin "$BR"
           echo "branch=$BR" >> "$GITHUB_OUTPUT"
 
-      - name: "Abrir (ou atualizar) draft PR de retomada"
+      - name: "Abrir (ou atualizar) draft PR de retomada (REST puro + auto-diagnóstico)"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BR="${{ steps.branch.outputs.branch }}"
-          BASE="${{ github.ref_name }}"
-          EXISTING=$(gh pr list --head "$BR" --state open --json number --jq '.[0].number // empty')
-          if [ -n "$EXISTING" ]; then
-            gh pr edit "$EXISTING" --body-file docs/handoff/SESSION_HANDOFF.md
-          else
-            gh pr create --base "$BASE" --head "$BR" --draft \
-              --title "🔁 Continuity: handoff da sessão @ $(git rev-parse --short HEAD)" \
-              --body-file docs/handoff/SESSION_HANDOFF.md
+          export BR="${{ steps.branch.outputs.branch }}"
+          export BASE="${{ github.ref_name }}"
+          export SHORT="$(git rev-parse --short HEAD)"
+          # pequeno intervalo p/ propagação do branch recém-empurrado
+          sleep 5
+          rc=0
+          python3 - <<'PY' || rc=$?
+          import json, os, urllib.request
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          token = os.environ["GH_TOKEN"]
+          api = f"https://api.github.com/repos/{repo}"
+          handoff = open("docs/handoff/SESSION_HANDOFF.md", encoding="utf-8").read()
+
+          def call(method: str, path: str, payload: dict | None = None):
+              data = json.dumps(payload).encode() if payload is not None else None
+              req = urllib.request.Request(
+                  api + path, data=data, method=method,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "Content-Type": "application/json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  return json.loads(resp.read() or b"null")
+
+          # 1) idempotência: PRs abertos com o mesmo head (REST puro — sem GraphQL)
+          owner = repo.split("/", 1)[0]
+          open_prs = call("GET", f"/pulls?head={owner}:{os.environ['BR']}&state=open")
+          if open_prs:
+              existing = open_prs[0]
+              call("PATCH", f"/pulls/{existing['number']}", {"body": handoff})
+              print(f"PR de retomada atualizado: #{existing['number']} {existing['html_url']}")
+          else:
+              pr = call("POST", "/pulls", {
+                  "base": os.environ["BASE"],
+                  "head": os.environ["BR"],
+                  "draft": True,
+                  "title": f"🔁 Continuity: handoff da sessão @ {os.environ['SHORT']}",
+                  "body": handoff,
+              })
+              print(f"Draft PR de retomada criado: #{pr['number']} {pr['html_url']}")
+          PY
+          if [ "$rc" -eq 0 ]; then
+            exit 0
           fi
+          # falha: publica o diagnóstico NO branch de handoff (lível de qualquer lugar)
+          printf 'DIAGNÓSTICO — passo de criação de PR (Session Continuity)\nrun=%s job=%s\n' \
+            "${RUN_ID:-?}" "${JOB_URL:-?}" > docs/handoff/CI_DIAGNOSTICS.txt
+          git add docs/handoff/CI_DIAGNOSTICS.txt
+          git commit -m "continuity: diagnóstico do passo de PR" || true
+          git push origin "$BR" || true
+          echo "diagnóstico publicado em $BR: docs/handoff/CI_DIAGNOSTICS.txt" >&2
+          exit 1
