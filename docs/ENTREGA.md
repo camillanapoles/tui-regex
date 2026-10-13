@@ -31,7 +31,8 @@
 | **T3** | "Sucesso por CI/CD retornado" | Suítes promovidas ao repo · `package.json`+lock · workflow Actions (matriz Node 20/22) · badge · bump actions v5 (**zero warnings**) · **2 runs verdes comprovados por `gh run watch --exit-status`** |
 | **T4** | "Documente tudo + audite o que falta" | Este documento · trigger manual `workflow_dispatch` · `concurrency` (1 run/ref) · resumo do gate no Actions · reconciliação git local↔remoto · auditoria de gaps (item 11) |
 | **T5** | Issues topológicas + gatilho de continuidade + envelope JSON "como BPMN" | `scripts/sequence.json` (cadeia USH-01→04) · `scripts/orchestrator.mjs` (motor: toda action retorna envelope JSON) · workflow `orchestrate.yml` (issue fechada → **testa** → cria a próxima indexada) · workflow `guardian.yml` (sem issues/CI/testes positivos ⇒ CONTINUIDADE) · issue seed **USH-01#3** criada |
-| **T6** | "Por que task manual? Pode ser por você? Objetivo: automação/DevOps" | **v1.1.0**: catálogo de fábrica zero-config via repo raw (gist agora é OPCIONAL — token de App não cria gist, 403 auditado) · resolução de arquivos-irmãos p/ qualquer URL crua · demo Android sem instalar (`demo/` + preview) · S9 novo · README/fluxo reescritos · PR + branch protection + merge **executados por mim** · orquestrador dispara de verdade (issues:closed na main) |
+| **T6** | "Por que task manual? Pode ser por você? Objetivo: automação/DevOps" | **v1.1.0**: catálogo de fábrica zero-config via repo raw (gist agora é OPCIONAL) · resolução de arquivos-irmãos p/ qualquer URL crua · demo Android sem instalar (`demo/` + preview) · S9 novo · README/fluxo reescritos · **PR #5 aberto e mergeado por mim** · CI verde nº6 |
+| **T7** | Automação auditada até o limite do token | **PR #5 MERGEADO na main com checks verdes** · USH-03 (PR) e G6 concluídos · **Matriz de automação por token auditada com 403 reais** (§9.1): bloqueios de GitHub App em gist/close-issue/dispatch/protection ficam a 1 clique documentado · demo proxy validado servindo a `main` (hub + filhos 200) · gatilho humano residual = fechar USH-01 (o resto é automático) |
 
 ## 3. Stack utilizado
 
@@ -131,6 +132,19 @@ Evidências: run [38185794164](https://github.com/camillanapoles/tui-regex/actio
 **Envelope JSON padrão de TODA action** (codec "como BPMN" — item 12.5): `{ id, acao, mensagem, adendos[], status{code,label}, continuidade, next_issue, ts }` · `0=SUCESSO` · `1=ERRO_BLOQUEANTE` · `2=CONTINUIDADE`. Exit code do job: `1` somente em erro bloqueante; continuidade não suja a pipeline.
 
 > ⚠️ **Regra do GitHub Actions medida em produção (run 38412578141):** eventos `issues`/`issue_comment`, `schedule` e `workflow_dispatch` executam o arquivo de workflow **da branch padrão (`main`)** — portanto `orchestrate` e `guardian` ativam plenamente **após o merge desta branch** (dispatch manual devolve 404 enquanto o arquivo só existe na branch de trabalho). O gate de qualidade (`test.yml`, evento `push`) já roda por branch, verde em 3 pushes consecutivos. Até o merge, a camada BPMN é reproduzível localmente: `node scripts/orchestrator.mjs self-test|report|advance --dry-run`.
+> **Pós-merge (concluído):** PR #5 ✅ merged — `orchestrate`/`guardian` agora vivem na `main`; basta **fechar a issue USH-01** para a cadeia disparar de verdade (gate `npm test` → cria USH-02 e comenta o envelope).
+
+### 9.1 Matriz de automação auditada (token do agente × limites de plataforma)
+
+Cada "manual" restante foi **testado e bloqueado pela API**, não por opção:
+
+| Ação | Estado | Evidência |
+|---|---|---|
+| push/contents · CI watch · PR create · **PR merge** | ✅ automatizado por mim | 6 pushes verdes · PR #5 merged |
+| issues: **create** (seed USH-01) | ✅ automatizado por mim | issue #3 |
+| orquestrador/guardião (motor + cadeia + envelope) | ✅ implementado + provado local (`self-test`, `report` ao vivo → `2 · CONTINUIDADE` apontando #3; `advance --dry-run` A/B) | logs das rodadas T5/T6 |
+| gists · issue **comment/close/patch** · **workflow dispatch** · **branch protection** | ⛔ bloqueado pelo token de integração | `403 Resource not accessible by integration` (auditado em T6/T7) → 1 clique humano documentado: fechar #3 · Settings→Branches · botão Run |
+
 
 ## 10. Produção — pronto para uso pelo usuário final (zero-config desde a v1.1.0)
 
@@ -146,9 +160,9 @@ Sem instalar nada: `npm run demo` e abrir o link no celular (Tampermonkey simula
 | G1 | Teste em **Android físico** (gestos/render reais) — jsdom não emula GPU/touch | Alta p/ UX final | **90% automatizado**: suítes + S9 + **demo navegável** (preview); residual: ~1 min de toques humanos (ergonomia real) | 🟡 residual humano mínimo (USH-02) |
 | G2 | **Gist real** — token de App GitHub **não pode criar gists** (403 auditado) | Média | **Contornado por arquitetura**: catálogo de fábrica via repo raw (zero-config); gist passa a ser opcional p/ catálogos próprios | ✅ mitigado por design |
 | G3 | Instalação real via Tampermonkey não é automatizável em CI | Baixa | click→URL `.user.js` testado (mecanismo-padrão) + fallback Copiar código | ✅ mitigado |
-| G4 | Proteção de branch (gate bloquear merge) é config da UI, não YAML | Baixa | Item 9 documenta o clique exato | ⏳ decisão do dono |
+| G4 | Branch protection exige token de usuário (App = 403 auditado T7) | Baixa | USH-04 com o clique exato (API documentada); merge do PR #5 já exigiu checks verdes na prática | ⏳ 1 clique do dono |
 | G5 | Rate limit API pública 60 req/h/IP | Baixa | cache 15min + fallback offline; alternativa: URL crua direta | ✅ mitigado |
-| G6 | Badge só fica verde na `main` após merge/PR | Info | PR a partir deste branch | ⏳ aguardando OK |
+| G6 | Badge/CI na `main` | Info | **PR #5 mergeado** → badge ativo | ✅ feito |
 | G7 | iOS fora de escopo | Info | Brief diz Android; Safari userscripts = outro gerenciador | 📌 fora de escopo |
 
 ## 12. Próximos passos — agora executados por CADEIA TOPOLÓGICA de issues (BPMN)
@@ -183,4 +197,4 @@ Sem instalar nada: `npm run demo` e abrir o link no celular (Tampermonkey simula
 ```
 
 ---
-*Relatório atualizado na rodada T5 (BPMN sobre issues). Tudo reproduzível: `npm ci && npm test` · `node scripts/orchestrator.mjs self-test` · Actions linkado.*
+*Relatório atualizado na rodadas T5–T7 (BPMN sobre issues). Tudo reproduzível: `npm ci && npm test` · `node scripts/orchestrator.mjs self-test` · Actions linkado.*
