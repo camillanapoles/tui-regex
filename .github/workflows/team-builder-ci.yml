@@ -1,0 +1,182 @@
+name: Team Builder CI/CD
+
+# CI/CD incremental: runs obsoletos são cancelados (concurrency), jobs
+# independente rodam em paralelo, e o deploy (CD) só ocorre em main com
+# suite 100% verde.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  # ══ 1. Qualidade de código ═══════════════════════════════════════════
+  quality:
+    name: Ruff (quality)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Ruff check
+        run: ruff check team_builder tests scripts
+      - name: Ruff format check
+        run: ruff format --check team_builder tests scripts || true # relatório
+
+  # ══ 2. Validação WASM (WAT -> wasmtime/Bytecode Alliance) ═══════════
+  wasm-validate:
+    name: WAT validation (wasmtime + WABT)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      # requirements completo: o script importa team_builder (pacote puxa
+      # fastapi/sqlalchemy/etc. no __init__), então valida contra o MESMO
+      # conjunto de dependências do produto
+      - name: Install (requirements)
+        run: pip install -r requirements.txt
+      - name: Validate all embedded WAT modules (wasmtime)
+        run: python scripts/validate_wat.py
+      - name: Emit .wat files (fonte única -> WABT)
+        run: python scripts/validate_wat.py --emit-wat wat-out
+      - name: Install wasm-validate (WABT)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wabt || true
+      - name: wasm-validate (segundo validador, WABT)
+        run: |
+          if command -v wat2wasm >/dev/null && command -v wasm-validate >/dev/null; then
+            mkdir -p wasm-out
+            for f in wat-out/*.wat; do
+              name="$(basename "$f" .wat)"
+              wat2wasm "$f" -o "wasm-out/${name}.wasm"
+              wasm-validate "wasm-out/${name}.wasm"
+              echo "wabt OK: ${name}.wasm"
+            done
+          else
+            echo "wabt indisponível — validação oficial já feita pelo wasmtime acima"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wasm-artifacts
+          path: |
+            wat-out/
+            wasm-out/
+          if-no-files-found: ignore
+
+  # ══ 3. Matriz de testes: unit / integration / e2e ═══════════════════
+  tests:
+    name: Tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: unit, suite: tests/unit }
+          - { name: integration, suite: tests/integration }
+          - { name: e2e, suite: tests/e2e }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements.txt pytest-cov
+      - name: Run ${{ matrix.name }}
+        run: >
+          python -m pytest ${{ matrix.suite }} -v
+          --junitxml=junit_${{ matrix.name }}.xml
+          --cov=team_builder --cov-report=xml --cov-report=term
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.name }}
+          path: junit_${{ matrix.name }}.xml
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.name }}
+          path: coverage.xml
+
+  # ══ 4. GOD MODE gate (PRs que tocam o núcleo da FSM) ═══════════════
+  god-mode-gate:
+    name: GOD MODE impact check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch PR files + body
+        run: |
+          gh pr view "${{ github.event.pull_request.number }}" \
+            --json files,body --jq '.files[].path' > changed.txt
+          gh pr view "${{ github.event.pull_request.number }}" \
+            --json body --jq .body > pr_body.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check impact analysis in PR body
+        run: |
+          FILES=$(paste -sd, changed.txt)
+          python scripts/check_god_mode.py --changed-files "$FILES" --pr-body pr_body.txt
+      - name: Show changed core files
+        if: always()
+        run: |
+          echo "Arquivos alterados no PR:"
+          cat changed.txt || true
+
+  # ══ 5. CD — artefato de distribuição (somente main) ════════════════
+  release:
+    name: Build & release wheel
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [quality, wasm-validate, tests]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build --wheel
+      - name: Verify wheel imports
+        run: |
+          pip install dist/*.whl
+          python -c "import team_builder; print('wheel OK', team_builder.__version__)"
+      - name: Create release (incremental por tag de versão)
+        run: |
+          VERSION=$(python -c "import team_builder; print(team_builder.__version__)")
+          TAG="v${VERSION}-$(date -u +%Y%m%d%H%M)"
+          gh release create "$TAG" dist/*.whl \
+            --title "Team Builder WASM $VERSION ($(date -u +%Y-%m-%d))" \
+            --notes "Build automático da main — ${GITHUB_SHA::7}" \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/*.whl

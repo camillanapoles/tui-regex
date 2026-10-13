@@ -1,0 +1,50 @@
+{
+  "captured_at": "2026-10-13T18:16:05.942610+00:00",
+  "source": "http://localhost:8000",
+  "branch": "arena/01a0d0f0-tui-regex",
+  "head": "e125edfeb5b553525299b183c06626de13014279",
+  "stats": {
+    "total_objects": 2,
+    "kinds_in_db": [
+      "git_op",
+      "session"
+    ],
+    "registered_kinds": [
+      "artifact",
+      "git_op",
+      "kv",
+      "session"
+    ]
+  },
+  "objects": {
+    "session/current": {
+      "kind": "session",
+      "key": "current",
+      "version": 1,
+      "data": {
+        "branch": "arena/01a0d0f0-tui-regex",
+        "last_commit": "5a23ad3",
+        "pr": 1,
+        "handoff_pr": 6,
+        "step": "toggle_validado_draft_pr_automatico",
+        "next": "merge PR#1 -> handoff canonico da main (draft PR automatico); E0.1 hash-chain"
+      },
+      "updated_at": "2026-10-13T18:16:00.696247",
+      "gate_id": "gate-038a8fa5d78e44c0aa712767a76eb3c9"
+    },
+    "git_op/branch/arena/01a0d0f0-tui-regex": {
+      "kind": "git_op",
+      "key": "branch/arena/01a0d0f0-tui-regex",
+      "version": 1,
+      "data": {
+        "branch": "arena/01a0d0f0-tui-regex",
+        "commit": "e125edf",
+        "pr": 1,
+        "handoff_pr": 6,
+        "state": "toggle_validado"
+      },
+      "updated_at": "2026-10-13T18:16:05.886596",
+      "gate_id": "gate-7ddade1e055e4c3f979e3444424e9eb7"
+    }
+  }
+}

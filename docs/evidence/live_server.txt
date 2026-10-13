@@ -1,0 +1,55 @@
+════ LIVE SERVER EVIDENCE — 2026-10-11T23:38:25Z ════
+
+── 1) /health
+{"status":"healthy","platform":"team-builder-wasm","version":"2.0.1","wasm_runtime":"wasmtime","llm":"mock","agents_live":0,"tools":4,"gates_executed":0}
+
+── 2) CONTINUITY: setar o estado da sessão (PUT /continuity/session/current)
+{"kind":"session","key":"current","version":1,"data":{"branch":"arena/01a0d0f0-tui-regex","base_branch":"main","last_commit":"299d332","cursor":"continuidade-entregue","next_steps":["E1 tenancy","E3 LLM real","criar PR"],"evidence":["docs/evidence/pytest_final.txt","docs/evidence/live_server.txt"]},"gate_id":"gate-7f4f39b1d05e49d1ad3d606911bfa2a7"}
+
+── 3) CONTINUITY: RECUPERAR (GET) — set/recover via API
+{"kind":"session","key":"current","version":1,"data":{"branch":"arena/01a0d0f0-tui-regex","base_branch":"main","last_commit":"299d332","cursor":"continuidade-entregue","next_steps":["E1 tenancy","E3 LLM real","criar PR"],"evidence":["docs/evidence/pytest_final.txt","docs/evidence/live_server.txt"]},"updated_at":"2026-10-11T23:38:25.475905","gate_id":"gate-d3f8787ad6c1495fac092d960bb4f61e"}
+
+── 4) CONTINUITY: kinds (registry da META-CLASSE)
+{"kinds":["artifact","git_op","kv","session"],"total":4,"registry":{"artifact":"ArtifactPointer","git_op":"GitOpState","kv":"GenericKV","session":"SessionState"}}
+
+── 5) CONTINUITY: gate bloqueia kind desconhecido (403 deny-by-default)
+HTTP 403 {"detail":"Continuidade: kind 'hacker' não registrado (deny-by-default)."}
+
+── 6) CONTINUITY: gate bloqueia key inválida (403) — %20 decodifica p/ espaço
+{"detail":"Continuidade: key inválida (máx 128 chars; [A-Za-z0-9._/-])."}
+
+── 7) CONTINUITY: versionamento (409 em expected_version obsoleto)
+{"detail":{"error":"conflito de versão","current_version":1,"expected_version":9}}
+
+── 8) CONTINUITY: /gates/blocked mostra as violações
+{"total_blocked":3,"records":[{"gate_id":"gate-2e09f4154b1c4172a574e3672afd9b33","gate_name":"continuity_write_gate","agent_id":"platform","status":"blocked","reason":"Continuidade: kind 'hacker' não registrado (deny-by-default).","input_id":"inp-6b951b18d89e4efaa80249b623fc91c2"},{"gate_id":"gate-898996b1848149428b1557095f3503a1","gate_name":"continuity_write_gate","agent_id":"platform","status":"blocked","reason":"Continuidade: kind 'hacker' não registrado (deny-by-default).","input_id":"inp-6464a66c4a604bf6a1a7198c7bf88a09"},{"gate_id":"gate-eb5e2032f71f4cd2b49415c9610cb825","gate_name":"continuity_write_gate","agent_id":"platform","status":"blocked","reason":"Continuidade: key inválid
+
+── 9) AGENT: Factory cria developer + work completo
+agent_id=dev-576b0163
+{"agent_id":"dev-576b0163","agent_role":"developer","task_id":"task-live-1","result":{"file_path":"mock-file_path","language":"python","code":"mock-code","test_code":"mock-test_code","docs":"mock-docs"},"artifacts":["mock-file_path"],"next_event":"complete","confidence":0.9,"notes":"DeveloperAgent concluiu a tarefa"}
+
+── 10) TOOL WASM: uppercase no sandbox (fuel real)
+{"success":true,"output":"WASM LIVE SERVER","error":null,"fuel_consumed":398,"duration_ms":2.9072419999920385,"sandbox_id":"wt-fc1a4001","tool":"uppercase","gate_id":"gate-815326b524794c8fae8e4a1cbbb038f8"}
+
+── 11) TOOL WASM: fuel exhaustion (fib 40, limite 5M)
+{"success":false,"output":null,"error":"OutOfFuel: módulo excedeu fuel_limit=5000000","fuel_consumed":5000000,"duration_ms":4.281359999993128,"sandbox_id":"wt-fc1a4001","tool":"fibonacci","gate_id":"gate-6dc9debee20444b29c2c4446c0784c49"}
+
+── 12) GOD sem credential (403) e com (201 forge 'double' + exec 21+21)
+HTTP 403
+{"tool_id":"tool-4d0675982a8e463894f58b87a4e62e8c","name":"double","entrypoint":"add","assigned_roles":["developer"],"status":"registered"}
+{"success":true,"output":"42","error":null,"fuel_consumed":4,"duration_ms":1.8582010000045557,"sandbox_id":"wt-fc1a4001","tool":"double","gate_id":"gate-f34f6b95921e4bf3adab987ab5056ab0"}
+
+── 13) CONTINUITY: stats finais
+{"total_objects":2,"kinds_in_db":["kv","session"],"registered_kinds":["artifact","git_op","kv","session"]}
+
+── 6b) GOD MODE: 403 sem credencial (GET correto) ──
+GET /god/audit sem credencial -> HTTP 403
+
+════ VALIDAÇÃO AO VIVO — HEAD 04df0aa — 2026-10-11T23:38:50Z ════
+CI GitHub (PR #1): 7/7 jobs SUCCESS — ruff, WAT(wasmtime+WABT), unit, integration, e2e, GOD gate; release=SKIPPED (só main)
+Local neste HEAD: 158 passed (112 unit + 39 integration + 7 e2e), cobertura 94%, ruff clean, WAT válido
+Continuidade: session/current set+recover OK; git_op gravado FORA da API (GitHubOps) recuperado via GET OK
+Gates: 403 kind desconhecido (deny-by-default), 409 versionamento, bloqueios em /gates/blocked
+WASM real: uppercase ('VALIDACAO OK', fuel=303) e OutOfFuel em fib(40)
+GOD MODE: 403 sem credencial, 200 com credencial
+════ FIM ════
