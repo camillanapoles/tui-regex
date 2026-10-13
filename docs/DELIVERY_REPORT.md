@@ -181,6 +181,12 @@ retomada completa — nenhum contexto vive só no chat:
   merge), lê o handoff e **recupera o estado pela Continuity API**
   (`GET /continuity/session/current`, `GET /continuity/git_op/branch/<branch>`);
   o draft PR do handoff roda o CI completo do repositório
+- **Nota de permissão (validada em 3 execuções reais):** a criação do draft PR
+  exige o toggle *Settings → Actions → General → "Allow GitHub Actions to
+  create and update pull requests"* no repositório. Enquanto desligado, o
+  workflow continua **verde** e publica `PR_CREATION_BLOCKED.txt` no branch de
+  handoff (retomada em 1 clique via *Compare & pull request*); com o toggle
+  ligado, o mesmo passo cria o draft automaticamente (idempotente)
 - **Snapshot do estado vivo:** `scripts/snapshot_continuity.py` exporta os objetos
   de continuidade do servidor para `docs/evidence/continuity_snapshot.json`
   (commitado); `scripts/generate_handoff.py` o embute no documento de handoff

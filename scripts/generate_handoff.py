@@ -124,6 +124,8 @@ def build_handoff() -> str:
 4. Validar o estado antes de agir: `pytest -q` (158 testes) e `python scripts/validate_wat.py`.
 5. Atualizar `session/current` via `PUT /continuity/session/current`
    (com `expected_version` do objeto recuperado) antes do primeiro trabalho.
+6. Se `docs/handoff/PR_CREATION_BLOCKED.txt` existir neste branch, seguir as
+   instruções dele (criar o PR em 1 clique ou ativar a permissão de Actions).
 
 ## Snapshot de continuidade (última gravação persistida)
 {continuity_snapshot()}
