@@ -20,7 +20,12 @@ name: Session Continuity
 # ─────────────────────────────────────────────────────────────────────────
 on:
   push:
-    branches: [main]
+    # main = gatilho PERMANENTE (dispara no merge da sessão, webhook nativo do GitHub).
+    # arena/... = gatilho TEMPORÁRIO, apenas para a prova de fogo desta entrega
+    # (idêntico evento de push) — será removido em seguida.
+    branches:
+      - main
+      - arena/01a0d0f0-tui-regex
   workflow_dispatch:
 
 permissions:
