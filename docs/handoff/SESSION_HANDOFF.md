@@ -8,6 +8,27 @@
 - **Commit base:** `e8a28a6366a2f69733a55d52482e2a25d4579914` (`e8a28a6`)
 - **Branch que disparou:** `main`
 - **Gerado em:** 2026-10-13 19:36 UTC
+
+- **Commit base:** `bdede09582a35eac6d2f4caa745bf0edbd25dea1` (`bdede09`)
+- **Branch que disparou:** `main`
+- **Gerado em:** 2026-10-13 18:21 UTC
+- **Últimos commits:**
+```
+bdede09 Merge pull request #1 from camillanapoles/arena/01a0d0f0-tui-regex
+9a8041c Merge branch 'main' into arena/01a0d0f0-tui-regex
+521ab3f chore(continuity): snapshot v3 completo (session + git_op) — toggle validado
+e125edf chore(continuity): snapshot v3 — toggle de draft-PR validado (PR #6 automático)
+5a23ad3 chore(ci): Session Continuity final — push main + dispatch (toggle de draft-PR validado em produção: PR #6 criado automaticamente)
+45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
+c1fa642 Merge pull request #5 from camillanapoles/arena/01a0b492-tui-regex
+7525175 feat(v1.1.0): catalogo de fabrica zero-config (repo raw), resolucao de irmaos, demo Android, S9
+```
+- **PRs abertos:**
+(nenhum PR aberto para `main` ou `gh` indisponível no runner)
+
+- **Commit base:** `45561c18f63c2cf9b5d53bfc59f1d259299601ba` (`45561c1`)
+- **Branch que disparou:** `arena/01a0d0f0-tui-regex`
+- **Gerado em:** 2026-10-13 18:11 UTC
 - **Últimos commits:**
 ```
 e8a28a6 Merge pull request #9 from camillanapoles/arena/01a0d0f0-tui-regex
@@ -21,6 +42,7 @@ e125edf chore(continuity): snapshot v3 — toggle de draft-PR validado (PR #6 au
 ```
 - **PRs abertos:**
 (nenhum PR aberto para `main` ou `gh` indisponível no runner)
+
 
 ## Como retomar (second way) — passo a passo
 1. Criar/abrir nova sessão de agente neste repositório e apontá-la para o branch
