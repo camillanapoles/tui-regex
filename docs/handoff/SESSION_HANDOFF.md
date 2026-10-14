@@ -5,41 +5,22 @@
 > deve começar lendo este documento.
 
 ## Estado atual (fatos do repositório)
-
-- **Commit base:** `bdede09582a35eac6d2f4caa745bf0edbd25dea1` (`bdede09`)
+- **Commit base:** `b57cecda1e0a73e1151fa84fc46606209de28d1a` (`b57cecd`)
 - **Branch que disparou:** `main`
-- **Gerado em:** 2026-10-13 18:21 UTC
+- **Gerado em:** 2026-10-14 00:34 UTC
 - **Últimos commits:**
 ```
-bdede09 Merge pull request #1 from camillanapoles/arena/01a0d0f0-tui-regex
-9a8041c Merge branch 'main' into arena/01a0d0f0-tui-regex
-521ab3f chore(continuity): snapshot v3 completo (session + git_op) — toggle validado
-e125edf chore(continuity): snapshot v3 — toggle de draft-PR validado (PR #6 automático)
-5a23ad3 chore(ci): Session Continuity final — push main + dispatch (toggle de draft-PR validado em produção: PR #6 criado automaticamente)
-45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
-c1fa642 Merge pull request #5 from camillanapoles/arena/01a0b492-tui-regex
-7525175 feat(v1.1.0): catalogo de fabrica zero-config (repo raw), resolucao de irmaos, demo Android, S9
+b57cecd Merge pull request #7 from camillanapoles/handoff/bdede09-20261013-1821
+2c4473f Merge branch 'main' into handoff/bdede09-20261013-1821
+e9211d5 Merge pull request #11 from camillanapoles/arena/01a0b492-tui-regex
+484b99c Merge branch 'main' into arena/01a0b492-tui-regex
+e8a28a6 Merge pull request #9 from camillanapoles/arena/01a0d0f0-tui-regex
+b7bedc9 Merge pull request #6 from camillanapoles/handoff/45561c1-20261013-1811
+8f3c2ca Merge branch 'arena/01a0d0f0-tui-regex' into handoff/45561c1-20261013-1811
+ef4e962 continuity: handoff da sessão @ bdede09 (ponto de retomada da próxima janela)
 ```
 - **PRs abertos:**
 (nenhum PR aberto para `main` ou `gh` indisponível no runner)
-
-- **Commit base:** `45561c18f63c2cf9b5d53bfc59f1d259299601ba` (`45561c1`)
-- **Branch que disparou:** `arena/01a0d0f0-tui-regex`
-- **Gerado em:** 2026-10-13 18:11 UTC
-- **Últimos commits:**
-```
-45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
-01777b5 chore(continuity): snapshot final (v2 — mecanismo de continuidade validado verde)
-7325867 chore(ci): remove gatilho temporário — Session Continuity final (push main + dispatch); fix corpo 403 no diagnóstico
-d037bc5 feat(ci): handoff resiliente — draft PR best-effort (403 publica nota no branch; continuidade garantida pelo branch) + corpo HTTP no diagnóstico
-fb6f427 fix(ci): diagnóstico captura stderr do python + corpo da resposta HTTP (causa raiz do passo de PR)
-4a4c2ca fix(ci): passo de PR via REST puro (stdlib) + auto-diagnóstico commitado no branch de handoff
-d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prova de fogo (push trigger)
-69f16f8 feat(ci): Session Continuity — handoff automático no fim da sessão (gate verde + branch handoff/ + draft PR de retomada) + snapshot de continuidade commitado
-```
-- **PRs abertos:**
-(nenhum PR aberto para `arena/01a0d0f0-tui-regex` ou `gh` indisponível no runner)
-
 
 ## Como retomar (second way) — passo a passo
 1. Criar/abrir nova sessão de agente neste repositório e apontá-la para o branch
