@@ -5,6 +5,24 @@
 > deve começar lendo este documento.
 
 ## Estado atual (fatos do repositório)
+
+- **Commit base:** `bdede09582a35eac6d2f4caa745bf0edbd25dea1` (`bdede09`)
+- **Branch que disparou:** `main`
+- **Gerado em:** 2026-10-13 18:21 UTC
+- **Últimos commits:**
+```
+bdede09 Merge pull request #1 from camillanapoles/arena/01a0d0f0-tui-regex
+9a8041c Merge branch 'main' into arena/01a0d0f0-tui-regex
+521ab3f chore(continuity): snapshot v3 completo (session + git_op) — toggle validado
+e125edf chore(continuity): snapshot v3 — toggle de draft-PR validado (PR #6 automático)
+5a23ad3 chore(ci): Session Continuity final — push main + dispatch (toggle de draft-PR validado em produção: PR #6 criado automaticamente)
+45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
+c1fa642 Merge pull request #5 from camillanapoles/arena/01a0b492-tui-regex
+7525175 feat(v1.1.0): catalogo de fabrica zero-config (repo raw), resolucao de irmaos, demo Android, S9
+```
+- **PRs abertos:**
+(nenhum PR aberto para `main` ou `gh` indisponível no runner)
+
 - **Commit base:** `45561c18f63c2cf9b5d53bfc59f1d259299601ba` (`45561c1`)
 - **Branch que disparou:** `arena/01a0d0f0-tui-regex`
 - **Gerado em:** 2026-10-13 18:11 UTC
@@ -22,6 +40,7 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
 - **PRs abertos:**
 (nenhum PR aberto para `arena/01a0d0f0-tui-regex` ou `gh` indisponível no runner)
 
+
 ## Como retomar (second way) — passo a passo
 1. Criar/abrir nova sessão de agente neste repositório e apontá-la para o branch
    `handoff/…` deste PR (ou para `main` após merge).
@@ -32,7 +51,7 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
    .venv/bin/uvicorn team_builder.api:app --host 0.0.0.0 --port 8000
    curl localhost:8000/continuity/stats
    curl localhost:8000/continuity/session/current
-   curl localhost:8000/continuity/git_op/branch/arena/01a0d0f0-tui-regex
+   curl localhost:8000/continuity/git_op/branch/main
    ```
 4. Validar o estado antes de agir: `pytest -q` (158 testes) e `python scripts/validate_wat.py`.
 5. Atualizar `session/current` via `PUT /continuity/session/current`
@@ -43,10 +62,10 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
 ## Snapshot de continuidade (última gravação persistida)
 ```json
 {
-  "captured_at": "2026-10-13T14:26:39.094874+00:00",
+  "captured_at": "2026-10-13T18:16:05.942610+00:00",
   "source": "http://localhost:8000",
   "branch": "arena/01a0d0f0-tui-regex",
-  "head": "73258679ac66743f3e5aa343b38b9a141e6c0edd",
+  "head": "e125edfeb5b553525299b183c06626de13014279",
   "stats": {
     "total_objects": 2,
     "kinds_in_db": [
@@ -64,34 +83,31 @@ d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prov
     "session/current": {
       "kind": "session",
       "key": "current",
-      "version": 2,
+      "version": 1,
       "data": {
         "branch": "arena/01a0d0f0-tui-regex",
-        "last_commit": "7325867",
+        "last_commit": "5a23ad3",
         "pr": 1,
-        "handoff_pr": 4,
-        "step": "session_continuity_mechanism_verified_green",
-        "next": "merge PR#1 -> handoff canonico da main; E0.1 hash-chain; toggle Actions p/ draft-PR automatico"
+        "handoff_pr": 6,
+        "step": "toggle_validado_draft_pr_automatico",
+        "next": "merge PR#1 -> handoff canonico da main (draft PR automatico); E0.1 hash-chain"
       },
-      "updated_at": "2026-10-13T14:26:36.531925",
-      "gate_id": "gate-2d17c546cca44298a9be32d2354e873e"
+      "updated_at": "2026-10-13T18:16:00.696247",
+      "gate_id": "gate-038a8fa5d78e44c0aa712767a76eb3c9"
     },
     "git_op/branch/arena/01a0d0f0-tui-regex": {
       "kind": "git_op",
       "key": "branch/arena/01a0d0f0-tui-regex",
       "version": 1,
       "data": {
-        "kind": "git_op",
-        "remote": "https://github.com/camillanapoles/tui-regex.git",
         "branch": "arena/01a0d0f0-tui-regex",
-        "commit": "efc57ad6e35d7aed801bdc762fdbd04c5ca506a5",
-        "pr_number": null,
-        "pr_url": "",
-        "status": "pending",
-        "last_error": ""
+        "commit": "e125edf",
+        "pr": 1,
+        "handoff_pr": 6,
+        "state": "toggle_validado"
       },
-      "updated_at": "2026-10-13T13:58:58.642872",
-      "gate_id": "gate-95cba5a98f9e482ead6d800c5d45f86d"
+      "updated_at": "2026-10-13T18:16:05.886596",
+      "gate_id": "gate-7ddade1e055e4c3f979e3444424e9eb7"
     }
   }
 }
