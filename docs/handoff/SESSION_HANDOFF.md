@@ -5,6 +5,9 @@
 > deve começar lendo este documento.
 
 ## Estado atual (fatos do repositório)
+- **Commit base:** `e8a28a6366a2f69733a55d52482e2a25d4579914` (`e8a28a6`)
+- **Branch que disparou:** `main`
+- **Gerado em:** 2026-10-13 19:36 UTC
 
 - **Commit base:** `bdede09582a35eac6d2f4caa745bf0edbd25dea1` (`bdede09`)
 - **Branch que disparou:** `main`
@@ -28,17 +31,17 @@ c1fa642 Merge pull request #5 from camillanapoles/arena/01a0b492-tui-regex
 - **Gerado em:** 2026-10-13 18:11 UTC
 - **Últimos commits:**
 ```
-45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
-01777b5 chore(continuity): snapshot final (v2 — mecanismo de continuidade validado verde)
-7325867 chore(ci): remove gatilho temporário — Session Continuity final (push main + dispatch); fix corpo 403 no diagnóstico
-d037bc5 feat(ci): handoff resiliente — draft PR best-effort (403 publica nota no branch; continuidade garantida pelo branch) + corpo HTTP no diagnóstico
-fb6f427 fix(ci): diagnóstico captura stderr do python + corpo da resposta HTTP (causa raiz do passo de PR)
-4a4c2ca fix(ci): passo de PR via REST puro (stdlib) + auto-diagnóstico commitado no branch de handoff
-d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prova de fogo (push trigger)
-69f16f8 feat(ci): Session Continuity — handoff automático no fim da sessão (gate verde + branch handoff/ + draft PR de retomada) + snapshot de continuidade commitado
+e8a28a6 Merge pull request #9 from camillanapoles/arena/01a0d0f0-tui-regex
+b7bedc9 Merge pull request #6 from camillanapoles/handoff/45561c1-20261013-1811
+8f3c2ca Merge branch 'arena/01a0d0f0-tui-regex' into handoff/45561c1-20261013-1811
+bdede09 Merge pull request #1 from camillanapoles/arena/01a0d0f0-tui-regex
+9a8041c Merge branch 'main' into arena/01a0d0f0-tui-regex
+521ab3f chore(continuity): snapshot v3 completo (session + git_op) — toggle validado
+e125edf chore(continuity): snapshot v3 — toggle de draft-PR validado (PR #6 automático)
+5a23ad3 chore(ci): Session Continuity final — push main + dispatch (toggle de draft-PR validado em produção: PR #6 criado automaticamente)
 ```
 - **PRs abertos:**
-(nenhum PR aberto para `arena/01a0d0f0-tui-regex` ou `gh` indisponível no runner)
+(nenhum PR aberto para `main` ou `gh` indisponível no runner)
 
 
 ## Como retomar (second way) — passo a passo
