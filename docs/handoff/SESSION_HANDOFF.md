@@ -5,6 +5,7 @@
 > deve começar lendo este documento.
 
 ## Estado atual (fatos do repositório)
+
 - **Commit base:** `bdede09582a35eac6d2f4caa745bf0edbd25dea1` (`bdede09`)
 - **Branch que disparou:** `main`
 - **Gerado em:** 2026-10-13 18:21 UTC
@@ -21,6 +22,24 @@ c1fa642 Merge pull request #5 from camillanapoles/arena/01a0b492-tui-regex
 ```
 - **PRs abertos:**
 (nenhum PR aberto para `main` ou `gh` indisponível no runner)
+
+- **Commit base:** `45561c18f63c2cf9b5d53bfc59f1d259299601ba` (`45561c1`)
+- **Branch que disparou:** `arena/01a0d0f0-tui-regex`
+- **Gerado em:** 2026-10-13 18:11 UTC
+- **Últimos commits:**
+```
+45561c1 chore(ci): gatilho temporário p/ validar toggle de draft-PR (removido em seguida)
+01777b5 chore(continuity): snapshot final (v2 — mecanismo de continuidade validado verde)
+7325867 chore(ci): remove gatilho temporário — Session Continuity final (push main + dispatch); fix corpo 403 no diagnóstico
+d037bc5 feat(ci): handoff resiliente — draft PR best-effort (403 publica nota no branch; continuidade garantida pelo branch) + corpo HTTP no diagnóstico
+fb6f427 fix(ci): diagnóstico captura stderr do python + corpo da resposta HTTP (causa raiz do passo de PR)
+4a4c2ca fix(ci): passo de PR via REST puro (stdlib) + auto-diagnóstico commitado no branch de handoff
+d94da01 ci(session-continuity): gatilho temporário no branch da entrega p/ prova de fogo (push trigger)
+69f16f8 feat(ci): Session Continuity — handoff automático no fim da sessão (gate verde + branch handoff/ + draft PR de retomada) + snapshot de continuidade commitado
+```
+- **PRs abertos:**
+(nenhum PR aberto para `arena/01a0d0f0-tui-regex` ou `gh` indisponível no runner)
+
 
 ## Como retomar (second way) — passo a passo
 1. Criar/abrir nova sessão de agente neste repositório e apontá-la para o branch
